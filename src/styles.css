@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: #020617;
+    color: #e2e8f0;
+    font-family: "SF Pro Text", "Segoe UI", sans-serif;
+    overflow: hidden;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
