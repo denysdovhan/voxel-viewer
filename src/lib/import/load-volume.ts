@@ -1,4 +1,12 @@
-import type { ImportProgress, LoadedVolume, PanoramaMeta, ParsedVolumeMeta, ScanFolderSource } from '../../types';
+import type {
+  ImportProgress,
+  LoadedVolume,
+  PanoramaImage,
+  PanoramaMeta,
+  ParsedVolumeMeta,
+  PreparedVolumeFor3D,
+  ScanFolderSource,
+} from '../../types';
 import { parseGalileosFolder, type ImportFailure } from './parse-galileos';
 
 type WorkerRequest = {
@@ -10,13 +18,22 @@ type WorkerRequest = {
 
 type WorkerEvent =
   | { type: 'progress'; progress: ImportProgress }
-  | { type: 'result'; volume: LoadedVolume; meta: ParsedVolumeMeta; panorama?: PanoramaMeta }
+  | {
+      type: 'result';
+      volume: LoadedVolume;
+      meta: ParsedVolumeMeta;
+      panorama?: PanoramaMeta;
+      panoramaImage: PanoramaImage;
+      prepared3D: PreparedVolumeFor3D;
+    }
   | { type: 'error'; error: ImportFailure };
 
 export interface LoadedImport {
   volume: LoadedVolume;
   meta: ParsedVolumeMeta;
   panorama?: PanoramaMeta;
+  panoramaImage: PanoramaImage;
+  prepared3D: PreparedVolumeFor3D;
 }
 
 export async function loadVolumeFromFolder(
@@ -52,8 +69,14 @@ export async function loadVolumeFromFolder(
       }
       if (data.type === 'result') {
         worker.terminate();
-        onProgress?.({ stage: 'ready', detail: 'Volume ready', completed: 1, total: 1 });
-        resolve({ volume: data.volume, meta: data.meta, panorama: data.panorama });
+        onProgress?.({ stage: 'ready', detail: 'Viewer ready', completed: 1, total: 1 });
+        resolve({
+          volume: data.volume,
+          meta: data.meta,
+          panorama: data.panorama,
+          panoramaImage: data.panoramaImage,
+          prepared3D: data.prepared3D,
+        });
         return;
       }
       worker.terminate();

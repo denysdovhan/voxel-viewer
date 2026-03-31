@@ -8,6 +8,7 @@ interface ViewportFrameProps {
   children: ReactNode;
   className?: string;
   density?: 'compact' | 'regular';
+  chrome?: 'framed' | 'flush';
   stage?: 'import' | 'viewer';
 }
 
@@ -19,12 +20,14 @@ export function ViewportFrame({
   children,
   className,
   density = 'regular',
+  chrome = 'framed',
   stage = 'viewer',
 }: ViewportFrameProps) {
   return (
     <section
       className={[
-        'relative h-full min-h-0 overflow-hidden rounded border border-slate-800 bg-slate-950/80',
+        'relative h-full min-h-0 overflow-hidden bg-slate-950/80',
+        chrome === 'framed' ? 'rounded border border-slate-800' : 'rounded-none border-0',
         density === 'compact' ? 'p-0' : 'p-0',
         className ?? '',
       ].join(' ').trim()}

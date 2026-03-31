@@ -1,5 +1,13 @@
 import { gunzipSync } from 'fflate';
-import type { ImportProgress, LoadedVolume, PanoramaMeta, ParsedVolumeMeta } from '../types';
+import { buildPanoramaImage, prepareVolumeFor3D } from '../lib/volume';
+import type {
+  ImportProgress,
+  LoadedVolume,
+  PanoramaImage,
+  PanoramaMeta,
+  ParsedVolumeMeta,
+  PreparedVolumeFor3D,
+} from '../types';
 
 type WorkerRequest = {
   type: 'assemble-volume';
@@ -10,12 +18,42 @@ type WorkerRequest = {
 
 type WorkerEvent =
   | { type: 'progress'; progress: ImportProgress }
-  | { type: 'result'; volume: LoadedVolume; meta: ParsedVolumeMeta; panorama?: PanoramaMeta }
+  | {
+      type: 'result';
+      volume: LoadedVolume;
+      meta: ParsedVolumeMeta;
+      panorama?: PanoramaMeta;
+      panoramaImage: PanoramaImage;
+      prepared3D: PreparedVolumeFor3D;
+    }
   | { type: 'error'; error: { code: string; message: string } };
 
 self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   void handle(event.data).then(
-    (volume) => postMessage({ type: 'result', volume, meta: event.data.meta, panorama: event.data.panorama } satisfies WorkerEvent),
+    ({ volume, panoramaImage, prepared3D }) => {
+      const scope = globalThis as typeof globalThis & {
+        postMessage: (message: WorkerEvent, transfer: Transferable[]) => void;
+      };
+      const message = {
+        type: 'result',
+        volume,
+        meta: event.data.meta,
+        panorama: event.data.panorama,
+        panoramaImage,
+        prepared3D,
+      } satisfies WorkerEvent;
+
+      scope.postMessage(
+        message,
+        [
+          volume.voxels.buffer,
+          volume.histogram.buffer,
+          panoramaImage.data.buffer,
+          panoramaImage.path.buffer,
+          prepared3D.voxels.buffer,
+        ] as Transferable[],
+      );
+    },
     (error: unknown) =>
       postMessage({
         type: 'error',
@@ -24,7 +62,11 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   );
 };
 
-async function handle(request: WorkerRequest): Promise<LoadedVolume> {
+async function handle(request: WorkerRequest): Promise<{
+  volume: LoadedVolume;
+  panoramaImage: PanoramaImage;
+  prepared3D: PreparedVolumeFor3D;
+}> {
   if (request.type !== 'assemble-volume') throw new Error('unsupported worker request');
   const map = new Map(request.files.map((file) => [file.path, file.buffer]));
   const slices = request.meta.sliceFiles.map((path) => ({ path, buffer: map.get(path) }));
@@ -52,10 +94,22 @@ async function handle(request: WorkerRequest): Promise<LoadedVolume> {
     post({ stage: 'inflating-slices', detail: `Inflated slice ${i + 1}/${slices.length}`, completed: i + 1, total: slices.length });
   }
 
-  return {
+  const volume = {
     meta: request.meta,
     voxels,
     histogram,
+  } satisfies LoadedVolume;
+
+  post({ stage: 'preparing-panorama', detail: 'Reconstructing panorama', completed: 0, total: 2 });
+  const panoramaImage = buildPanoramaImage(volume, request.panorama);
+
+  post({ stage: 'preparing-3d', detail: 'Preparing 3D rendering', completed: 1, total: 2 });
+  const prepared3D = prepareVolumeFor3D(volume);
+
+  return {
+    volume,
+    panoramaImage,
+    prepared3D,
   };
 }
 

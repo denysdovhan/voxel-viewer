@@ -12,12 +12,13 @@ const DEFAULT_WINDOW = 3500;
 const DEFAULT_LEVEL = 1800;
 const MAX_3D_TEXTURE_EDGE = 256;
 const MAX_SLICE_CACHE_ENTRIES = 12;
-const PANO_MAX_OUTPUT_WIDTH = 1400;
-const PANO_OUTPUT_WIDTH_SCALE = 2.5;
-const PANO_MIN_OUTPUT_HEIGHT = 320;
-const PANO_MIN_HALF_THICKNESS = 6;
-const PANO_MAX_HALF_THICKNESS = 44;
-const PANO_DEFAULT_HALF_THICKNESS = 18;
+const PANO_MAX_OUTPUT_WIDTH = 1600;
+const PANO_OUTPUT_WIDTH_SCALE = 2.2;
+const PANO_MIN_OUTPUT_HEIGHT = 384;
+const PANO_MAX_OUTPUT_HEIGHT = 576;
+const PANO_MIN_HALF_THICKNESS = 2;
+const PANO_MAX_HALF_THICKNESS = 8;
+const PANO_DEFAULT_HALF_THICKNESS = 3;
 const JAW_BOUNDS_MARGIN_X = 18;
 const JAW_BOUNDS_MARGIN_Y = 18;
 const JAW_BOUNDS_MARGIN_Z = 24;
@@ -40,6 +41,11 @@ interface PanoramaSample {
   y: number;
   normalX: number;
   normalY: number;
+}
+
+interface SliceDensity {
+  z: number;
+  count: number;
 }
 
 interface VolumeCacheEntry {
@@ -270,6 +276,7 @@ export function grayToRgba(gray: ArrayLike<number>, out?: Uint8ClampedArray): Ui
 export function buildPanoramaImage(volume: LoadedVolume, meta?: PanoramaMeta | null): PanoramaImage {
   const [width, , depth] = volume.meta.dimensions;
   const jawBounds = estimateJawBounds(volume);
+  const zRange = resolvePanoramaZRange(volume, jawBounds);
   const positions = buildPanoramaCurve(volume, jawBounds, meta);
   const outputWidth = Math.max(
     width,
@@ -280,16 +287,30 @@ export function buildPanoramaImage(volume: LoadedVolume, meta?: PanoramaMeta | n
   );
   const outputHeight = Math.max(
     PANO_MIN_OUTPUT_HEIGHT,
-    Math.round(meta?.projSize[1] || jawBounds.maxZ - jawBounds.minZ + 1),
+    Math.min(
+      PANO_MAX_OUTPUT_HEIGHT,
+      Math.round(
+        Math.min(
+          meta?.projSize[1] || depth,
+          Math.max(
+            zRange.maxZ - zRange.minZ + 1,
+            (zRange.maxZ - zRange.minZ + 1) * 2.4,
+          ),
+        ),
+      ),
+    ),
   );
   const data = new Uint8ClampedArray(outputWidth * outputHeight * 4);
+  const path = new Float32Array(outputWidth * 2);
   const halfThickness = resolvePanoramaHalfThickness(volume, meta);
-  const zTop = jawBounds.maxZ;
-  const zBottom = jawBounds.minZ;
+  const zTop = zRange.maxZ;
+  const zBottom = zRange.minZ;
 
   for (let x = 0; x < outputWidth; x += 1) {
     const t = outputWidth === 1 ? 0 : x / (outputWidth - 1);
     const sample = positions(t);
+    path[x * 2] = sample.x;
+    path[x * 2 + 1] = sample.y;
     for (let row = 0; row < outputHeight; row += 1) {
       const v = outputHeight === 1 ? 0 : row / (outputHeight - 1);
       const zCenter =
@@ -313,19 +334,82 @@ export function buildPanoramaImage(volume: LoadedVolume, meta?: PanoramaMeta | n
     }
   }
 
-  return {
+  return trimPanoramaRows({
     width: outputWidth,
     height: outputHeight,
     data,
     mode: meta ? 'metadata-seeded' : 'volume-derived',
+    path,
+    zRange: [zTop, zBottom],
+  });
+}
+
+export function resolvePanoramaSelection(
+  volume: LoadedVolume,
+  panorama: PanoramaImage,
+  point: { xRatio: number; yRatio: number },
+): VolumeCursor {
+  const column = clamp(
+    Math.round(clamp(point.xRatio, 0, 1) * Math.max(1, panorama.width - 1)),
+    0,
+    panorama.width - 1,
+  );
+  const pathIndex = column * 2;
+  const zTop = panorama.zRange[0];
+  const zBottom = panorama.zRange[1];
+  return {
+    x: clamp(Math.round(panorama.path[pathIndex] ?? 0), 0, volume.meta.dimensions[0] - 1),
+    y: clamp(Math.round(panorama.path[pathIndex + 1] ?? 0), 0, volume.meta.dimensions[1] - 1),
+    z: clamp(
+      Math.round(zTop - clamp(point.yRatio, 0, 1) * Math.max(1, zTop - zBottom)),
+      0,
+      volume.meta.dimensions[2] - 1,
+    ),
+  };
+}
+
+export function projectCursorToPanorama(
+  panorama: PanoramaImage | null,
+  cursor: VolumeCursor | null,
+): { x: number; y: number } | undefined {
+  if (!panorama || !cursor) return undefined;
+
+  let bestColumn = 0;
+  let bestScore = Number.POSITIVE_INFINITY;
+  for (let x = 0; x < panorama.width; x += 1) {
+    const pathIndex = x * 2;
+    const dx = (panorama.path[pathIndex] ?? 0) - cursor.x;
+    const dy = (panorama.path[pathIndex + 1] ?? 0) - cursor.y;
+    const score = dx * dx + dy * dy;
+    if (score < bestScore) {
+      bestScore = score;
+      bestColumn = x;
+    }
+  }
+
+  const zTop = panorama.zRange[0];
+  const zBottom = panorama.zRange[1];
+  const yRatio = clamp(
+    (zTop - cursor.z) / Math.max(1, zTop - zBottom),
+    0,
+    1,
+  );
+
+  return {
+    x: bestColumn,
+    y: yRatio * Math.max(1, panorama.height - 1),
   };
 }
 
 function resolvePanoramaHalfThickness(volume: LoadedVolume, meta?: PanoramaMeta | null): number {
   const base = meta?.thicknessScale && Number.isFinite(meta.thicknessScale) ? meta.thicknessScale : 1;
-  const scaled = Math.round(PANO_DEFAULT_HALF_THICKNESS * clamp(base, 0.5, 2.5));
+  const scaled = Math.round(PANO_DEFAULT_HALF_THICKNESS * clamp(base, 0.75, 1.6));
   const [_, height] = volume.meta.dimensions;
-  return clamp(scaled, PANO_MIN_HALF_THICKNESS, Math.min(PANO_MAX_HALF_THICKNESS, Math.max(8, Math.round(height * 0.14))));
+  return clamp(
+    scaled,
+    PANO_MIN_HALF_THICKNESS,
+    Math.min(PANO_MAX_HALF_THICKNESS, Math.max(3, Math.round(height * 0.035))),
+  );
 }
 
 function samplePanoColumn(
@@ -339,25 +423,21 @@ function samplePanoColumn(
 ): number {
   const [width, height, depth] = volume.meta.dimensions;
   let best = 0;
+  let weighted = 0;
+  let totalWeight = 0;
 
   for (let offset = -halfThickness; offset <= halfThickness; offset += 1) {
     const x = clamp(centerX + normalX * offset, 0, width - 1);
     const y = clamp(centerY + normalY * offset, 0, height - 1);
+    const radialWeight = 1 - Math.abs(offset) / Math.max(1, halfThickness + 1);
     const value = sampleVoxelBilinear(volume, x, y, zCenter);
     if (value > best) best = value;
-
-    if (zCenter > 0) {
-      const below = sampleVoxelBilinear(volume, x, y, zCenter - 1);
-      if (below > best) best = below;
-    }
-
-    if (zCenter < depth - 1) {
-      const above = sampleVoxelBilinear(volume, x, y, zCenter + 1);
-      if (above > best) best = above;
-    }
+    weighted += value * radialWeight;
+    totalWeight += radialWeight;
   }
 
-  return mapIntensityToGray(best, DEFAULT_WINDOW, DEFAULT_LEVEL);
+  const mean = totalWeight > 0 ? weighted / totalWeight : best;
+  return mapIntensityToGray(best * 0.82 + mean * 0.18, DEFAULT_WINDOW, DEFAULT_LEVEL);
 }
 
 function sampleVoxelBilinear(volume: LoadedVolume, x: number, y: number, z: number): number {
@@ -386,20 +466,87 @@ function buildPanoramaCurve(
   meta?: PanoramaMeta | null,
 ): (t: number) => PanoramaSample {
   const [, height] = volume.meta.dimensions;
+  const template = resolvePanoramaTemplate(volume, jawBounds, meta);
   const curve = curveFromVolume(volume, jawBounds, meta);
   if (curve) return curve;
 
   const spanX = jawBounds.maxX - jawBounds.minX;
-  const centerX = (jawBounds.minX + jawBounds.maxX) / 2;
-  const centerY = clamp((jawBounds.minY + jawBounds.maxY) * 0.5, 0, height - 1);
-  const archHeight = Math.max(height * 0.12, (jawBounds.maxY - jawBounds.minY) * 0.42);
   return (t: number) => {
     const x = jawBounds.minX + t * spanX;
-    const normalizedX = spanX <= 0 ? 0 : (x - centerX) / Math.max(1, spanX * 0.5);
-    const y = clamp(centerY - archHeight + normalizedX * normalizedX * archHeight, 0, height - 1);
-    const derivative = (normalizedX * archHeight * 2) / Math.max(1, spanX * 0.5);
+    const sample = sampleTemplateCurve(template, x, height);
+    const y = sample.y;
+    const derivative = sample.derivative;
     const normal = normalize2D(-derivative, 1);
     return { x, y, normalX: normal.x, normalY: normal.y };
+  };
+}
+
+function resolvePanoramaTemplate(
+  volume: LoadedVolume,
+  jawBounds: VolumeBounds,
+  meta?: PanoramaMeta | null,
+): {
+  centerX: number;
+  baseY: number;
+  archHeight: number;
+  halfSpan: number;
+} {
+  const [, height] = volume.meta.dimensions;
+  const spanX = Math.max(1, jawBounds.maxX - jawBounds.minX);
+  const spanY = Math.max(1, jawBounds.maxY - jawBounds.minY);
+  const shiftXValue = meta?.positionsX?.[0];
+  const shiftYValue = meta?.positionsY?.[0];
+  const shiftX =
+    typeof shiftXValue === 'number' && Number.isFinite(shiftXValue)
+      ? (shiftXValue / Math.max(volume.meta.spacing[0], 1e-3)) * 0.35
+      : 0;
+  const shiftY =
+    typeof shiftYValue === 'number' && Number.isFinite(shiftYValue)
+      ? (-shiftYValue / Math.max(volume.meta.spacing[1], 1e-3)) * 0.08
+      : 0;
+  const curveProfile = resolveCurveProfile(meta?.curveType);
+
+  return {
+    centerX: clamp((jawBounds.minX + jawBounds.maxX) * 0.5 + shiftX, 0, volume.meta.dimensions[0] - 1),
+    baseY: clamp(jawBounds.minY + spanY * curveProfile.baseYScale + shiftY, 0, height - 1),
+    archHeight: Math.max(height * 0.06, spanY * curveProfile.archHeightScale),
+    halfSpan: Math.max(1, spanX * curveProfile.halfSpanScale),
+  };
+}
+
+function resolveCurveProfile(curveType?: string): {
+  baseYScale: number;
+  archHeightScale: number;
+  halfSpanScale: number;
+} {
+  switch (curveType) {
+    case '1':
+      return { baseYScale: 0.58, archHeightScale: 0.38, halfSpanScale: 0.46 };
+    case '2':
+      return { baseYScale: 0.59, archHeightScale: 0.34, halfSpanScale: 0.49 };
+    case '3':
+      return { baseYScale: 0.61, archHeightScale: 0.28, halfSpanScale: 0.53 };
+    case '4':
+      return { baseYScale: 0.62, archHeightScale: 0.25, halfSpanScale: 0.56 };
+    default:
+      return { baseYScale: 0.6, archHeightScale: 0.31, halfSpanScale: 0.51 };
+  }
+}
+
+function sampleTemplateCurve(
+  template: { centerX: number; baseY: number; archHeight: number; halfSpan: number },
+  x: number,
+  maxHeight: number,
+): { y: number; derivative: number } {
+  const normalizedX = (x - template.centerX) / Math.max(1, template.halfSpan);
+  const y = clamp(
+    template.baseY - template.archHeight + normalizedX * normalizedX * template.archHeight,
+    0,
+    maxHeight - 1,
+  );
+  return {
+    y,
+    derivative: (normalizedX * template.archHeight * 2) / Math.max(1, template.halfSpan),
   };
 }
 
@@ -409,27 +556,34 @@ function curveFromVolume(
   meta?: PanoramaMeta | null,
 ): ((t: number) => PanoramaSample) | null {
   const [width, height] = volume.meta.dimensions;
-  const mip = buildAxialMIP(volume, jawBounds.minZ, jawBounds.maxZ);
+  const occlusalZ = estimateOcclusalSlice(volume, jawBounds);
+  const mip = buildAxialMIP(volume, occlusalZ - 14, occlusalZ + 14);
   const yByX = new Float32Array(width);
   const valid = new Uint8Array(width);
+  const template = resolvePanoramaTemplate(volume, jawBounds, meta);
   const minSearchY = clamp(jawBounds.minY - 14, 0, height - 1);
   const maxSearchY = clamp(jawBounds.maxY + 14, 0, height - 1);
+  const searchRadius = clamp(Math.round((maxSearchY - minSearchY) * 0.12), 20, 34);
 
   for (let x = jawBounds.minX; x <= jawBounds.maxX; x += 1) {
+    const expected = sampleTemplateCurve(template, x, height).y;
+    const startY = clamp(Math.round(expected) - searchRadius, minSearchY, maxSearchY);
+    const endY = clamp(Math.round(expected) + searchRadius, minSearchY, maxSearchY);
     let bestY = -1;
-    let bestScore = 0;
-    for (let y = minSearchY + 1; y < maxSearchY - 1; y += 1) {
-      const score =
+    let bestScore = Number.NEGATIVE_INFINITY;
+    for (let y = startY + 1; y < endY - 1; y += 1) {
+      const intensity =
         (mip[y * width + x] ?? 0) * 0.5 +
         (mip[(y - 1) * width + x] ?? 0) * 0.25 +
         (mip[(y + 1) * width + x] ?? 0) * 0.25;
+      const score = intensity - Math.abs(y - expected) * 18;
       if (score > bestScore) {
         bestScore = score;
         bestY = y;
       }
     }
 
-    if (bestY >= 0 && bestScore >= 1800) {
+    if (bestY >= 0 && bestScore >= 1500) {
       yByX[x] = bestY;
       valid[x] = 1;
     }
@@ -444,29 +598,67 @@ function curveFromVolume(
   }
   if (validCount < Math.max(24, (jawBounds.maxX - jawBounds.minX) * 0.2)) return null;
 
-  const shiftX =
-    meta?.positionsX[0] && Number.isFinite(meta.positionsX[0])
-      ? meta.positionsX[0] / Math.max(volume.meta.spacing[0], 1e-3)
-      : 0;
-  const shiftY =
-    meta?.positionsY[0] && Number.isFinite(meta.positionsY[0])
-      ? -meta.positionsY[0] / Math.max(volume.meta.spacing[1], 1e-3) * 0.08
-      : 0;
-
   return (t: number) => {
     const x = clamp(jawBounds.minX + t * (jawBounds.maxX - jawBounds.minX), 0, width - 1);
-    const baseY = sampleCurve(yByX, x);
-    const leftY = sampleCurve(yByX, clamp(x - 2, 0, width - 1));
-    const rightY = sampleCurve(yByX, clamp(x + 2, 0, width - 1));
+    const templateSample = sampleTemplateCurve(template, x, height);
+    const baseY = sampleCurve(yByX, x) * 0.78 + templateSample.y * 0.22;
+    const leftY =
+      sampleCurve(yByX, clamp(x - 2, 0, width - 1)) * 0.78 +
+      sampleTemplateCurve(template, clamp(x - 2, 0, width - 1), height).y * 0.22;
+    const rightY =
+      sampleCurve(yByX, clamp(x + 2, 0, width - 1)) * 0.78 +
+      sampleTemplateCurve(template, clamp(x + 2, 0, width - 1), height).y * 0.22;
     const derivative = (rightY - leftY) / 4;
     const normal = normalize2D(-derivative, 1);
     return {
-      x: clamp(x + shiftX * 0.06, 0, width - 1),
-      y: clamp(baseY + shiftY, 0, height - 1),
+      x,
+      y: clamp(baseY, 0, height - 1),
       normalX: normal.x,
       normalY: normal.y,
     };
   };
+}
+
+function estimateOcclusalSlice(volume: LoadedVolume, jawBounds: VolumeBounds): number {
+  const candidates = [3000, 2600, 2200, 1800];
+  let best: SliceDensity | null = null;
+
+  for (const threshold of candidates) {
+    const slices = sliceDensities(volume, jawBounds, threshold);
+    const candidate = slices.reduce<SliceDensity | null>(
+      (current, entry) => (current === null || entry.count > current.count ? entry : current),
+      null,
+    );
+    if (candidate && candidate.count > 800) {
+      best = candidate;
+      break;
+    }
+  }
+
+  return best?.z ?? Math.round((jawBounds.minZ + jawBounds.maxZ) / 2);
+}
+
+function sliceDensities(
+  volume: LoadedVolume,
+  jawBounds: VolumeBounds,
+  threshold: number,
+): SliceDensity[] {
+  const [width, height] = volume.meta.dimensions;
+  const out: SliceDensity[] = [];
+
+  for (let z = jawBounds.minZ; z <= jawBounds.maxZ; z += 1) {
+    let count = 0;
+    const planeOffset = z * width * height;
+    for (let y = jawBounds.minY; y <= jawBounds.maxY; y += 1) {
+      const rowOffset = planeOffset + y * width;
+      for (let x = jawBounds.minX; x <= jawBounds.maxX; x += 1) {
+        if ((volume.voxels[rowOffset + x] ?? 0) >= threshold) count += 1;
+      }
+    }
+    out.push({ z, count });
+  }
+
+  return out;
 }
 
 function buildAxialMIP(volume: LoadedVolume, zMin: number, zMax: number): Uint16Array {
@@ -560,6 +752,116 @@ function estimateJawBounds(volume: LoadedVolume): VolumeBounds {
   };
 }
 
+function resolvePanoramaZRange(
+  volume: LoadedVolume,
+  jawBounds: VolumeBounds,
+): { minZ: number; maxZ: number } {
+  const [width, height, depth] = volume.meta.dimensions;
+  const counts = new Uint32Array(depth);
+  const smoothed = new Float32Array(depth);
+  let peak = 0;
+  let peakZ = Math.round((jawBounds.minZ + jawBounds.maxZ) / 2);
+
+  for (let z = jawBounds.minZ; z <= jawBounds.maxZ; z += 1) {
+    const planeOffset = z * width * height;
+    let count = 0;
+    for (let y = jawBounds.minY; y <= jawBounds.maxY; y += 1) {
+      const rowOffset = planeOffset + y * width;
+      for (let x = jawBounds.minX; x <= jawBounds.maxX; x += 1) {
+        if ((volume.voxels[rowOffset + x] ?? 0) >= 2400) count += 1;
+      }
+    }
+    counts[z] = count;
+  }
+
+  for (let z = jawBounds.minZ; z <= jawBounds.maxZ; z += 1) {
+    let total = 0;
+    let samples = 0;
+    for (let offset = -4; offset <= 4; offset += 1) {
+      const sampleZ = clamp(z + offset, jawBounds.minZ, jawBounds.maxZ);
+      total += counts[sampleZ] ?? 0;
+      samples += 1;
+    }
+    smoothed[z] = total / Math.max(1, samples);
+    if (smoothed[z] > peak) {
+      peak = smoothed[z];
+      peakZ = z;
+    }
+  }
+
+  if (peak < 100) {
+    return { minZ: jawBounds.minZ, maxZ: jawBounds.maxZ };
+  }
+
+  const resolveContiguousWindow = (ratio: number) => {
+    const activeThreshold = Math.max(55, peak * ratio);
+    let minZ = peakZ;
+    let maxZ = peakZ;
+    while (minZ > jawBounds.minZ && smoothed[minZ - 1] >= activeThreshold) minZ -= 1;
+    while (maxZ < jawBounds.maxZ && smoothed[maxZ + 1] >= activeThreshold) maxZ += 1;
+    return { minZ, maxZ, span: maxZ - minZ + 1 };
+  };
+
+  const tight = resolveContiguousWindow(0.18);
+  const active = tight.span >= 80 ? tight : resolveContiguousWindow(0.1);
+  const maxHalfSpan = clamp(Math.round((jawBounds.maxZ - jawBounds.minZ + 1) * 0.32), 96, 192);
+
+  return {
+    minZ: clamp(Math.max(active.minZ - 18, peakZ - maxHalfSpan), 0, depth - 1),
+    maxZ: clamp(Math.min(active.maxZ + 18, peakZ + maxHalfSpan), 0, depth - 1),
+  };
+}
+
+function trimPanoramaRows(panorama: PanoramaImage): PanoramaImage {
+  const { width, height, data, zRange } = panorama;
+  if (height <= 32) return panorama;
+
+  let firstActive = -1;
+  let lastActive = -1;
+
+  for (let row = 0; row < height; row += 1) {
+    let rowMax = 0;
+    let rowTotal = 0;
+    for (let x = 0; x < width; x += 1) {
+      const value = data[(row * width + x) * 4] ?? 0;
+      rowTotal += value;
+      if (value > rowMax) rowMax = value;
+    }
+    const rowMean = rowTotal / Math.max(1, width);
+    if (rowMean >= 10 || rowMax >= 28) {
+      if (firstActive < 0) firstActive = row;
+      lastActive = row;
+    }
+  }
+
+  if (firstActive < 0 || lastActive < 0) return panorama;
+
+  const margin = clamp(Math.round(height * 0.045), 10, 28);
+  const cropTop = clamp(firstActive - margin, 0, height - 1);
+  const cropBottom = clamp(lastActive + margin, 0, height - 1);
+  const nextHeight = cropBottom - cropTop + 1;
+  if (nextHeight >= height - 4) return panorama;
+
+  const nextData = new Uint8ClampedArray(width * nextHeight * 4);
+  for (let row = 0; row < nextHeight; row += 1) {
+    const sourceOffset = (cropTop + row) * width * 4;
+    nextData.set(data.subarray(sourceOffset, sourceOffset + width * 4), row * width * 4);
+  }
+
+  const zSpan = Math.max(1, zRange[0] - zRange[1]);
+  const topRatio = cropTop / Math.max(1, height - 1);
+  const bottomRatio = cropBottom / Math.max(1, height - 1);
+  const nextTop = Math.round(zRange[0] - zSpan * topRatio);
+  const nextBottom = Math.round(zRange[0] - zSpan * bottomRatio);
+
+  return {
+    ...panorama,
+    height: nextHeight,
+    data: nextData,
+    zRange: [nextTop, nextBottom],
+  };
+}
+
 function findBoundsAboveThreshold(volume: LoadedVolume, threshold: number): VolumeBounds | null {
   const [width, height, depth] = volume.meta.dimensions;
   let minX = width;
@@ -650,12 +952,12 @@ export function prepareVolumeFor3D(volume: LoadedVolume): PreparedVolumeFor3D {
   const cropped = cropVolumeForPreview(volume);
   const [width, height, depth] = cropped.dimensions;
   const maxEdge = Math.max(width, height, depth);
-  const threshold = Math.max(2200, Math.min(3200, Math.round(cropped.scalarRange[1] * 0.72)));
+  const threshold = estimatePreviewThreshold(cropped.voxels, cropped.scalarRange);
   if (maxEdge <= MAX_3D_TEXTURE_EDGE) {
     return {
       dimensions: cropped.dimensions,
       spacing: cropped.spacing,
-      voxels: cropped.voxels,
+      voxels: quantizePreviewVoxels(cropped.voxels, cropped.scalarRange),
       scalarRange: cropped.scalarRange,
       threshold,
       downsampled: false,
@@ -688,12 +990,58 @@ export function prepareVolumeFor3D(volume: LoadedVolume): PreparedVolumeFor3D {
       cropped.spacing[1] / scale,
       cropped.spacing[2] / scale,
     ],
-    voxels: out,
+    voxels: quantizePreviewVoxels(out, cropped.scalarRange),
     scalarRange: cropped.scalarRange,
     threshold,
     downsampled: true,
     cropped: true,
   };
+}
+
+function quantizePreviewVoxels(
+  voxels: Uint16Array,
+  scalarRange: [number, number],
+): Uint8Array {
+  const [scalarMin, scalarMax] = scalarRange;
+  const span = Math.max(1, scalarMax - scalarMin);
+  const out = new Uint8Array(voxels.length);
+  for (let index = 0; index < voxels.length; index += 1) {
+    const normalized = ((voxels[index] ?? 0) - scalarMin) / span;
+    out[index] = Math.round(clamp(normalized, 0, 1) * 255);
+  }
+  return out;
+}
+
+function estimatePreviewThreshold(
+  voxels: Uint16Array,
+  scalarRange: [number, number],
+): number {
+  const histogram = new Uint32Array(4096);
+  for (let index = 0; index < voxels.length; index += 1) {
+    histogram[Math.min(histogram.length - 1, voxels[index] ?? 0)] += 1;
+  }
+
+  const percentile95 = resolveHistogramPercentile(histogram, voxels.length, 0.95);
+  const percentile985 = resolveHistogramPercentile(histogram, voxels.length, 0.985);
+  return clamp(
+    Math.round(percentile95 * 0.42 + percentile985 * 0.14),
+    Math.max(950, scalarRange[0]),
+    Math.min(1650, scalarRange[1]),
+  );
+}
+
+function resolveHistogramPercentile(
+  histogram: Uint32Array,
+  total: number,
+  percentile: number,
+): number {
+  const target = total * percentile;
+  let seen = 0;
+  for (let value = 0; value < histogram.length; value += 1) {
+    seen += histogram[value] ?? 0;
+    if (seen >= target) return value;
+  }
+  return histogram.length - 1;
 }
 
 function sampleIndex(index: number, outSize: number, inSize: number): number {

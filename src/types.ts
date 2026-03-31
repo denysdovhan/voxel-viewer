@@ -46,7 +46,16 @@ export interface ImportIssue {
 }
 
 export interface ImportProgress {
-  stage: 'idle' | 'scanning' | 'parsing-meta' | 'inflating-slices' | 'assembling' | 'ready' | 'error';
+  stage:
+    | 'idle'
+    | 'scanning'
+    | 'parsing-meta'
+    | 'inflating-slices'
+    | 'assembling'
+    | 'preparing-panorama'
+    | 'preparing-3d'
+    | 'ready'
+    | 'error';
   detail: string;
   completed: number;
   total: number;
@@ -74,12 +83,14 @@ export interface PanoramaImage {
   height: number;
   data: Uint8ClampedArray;
   mode: 'metadata-seeded' | 'volume-derived' | 'fallback-arch';
+  path: Float32Array;
+  zRange: [number, number];
 }
 
 export interface PreparedVolumeFor3D {
   dimensions: [number, number, number];
   spacing: [number, number, number];
-  voxels: Uint16Array;
+  voxels: Uint8Array;
   scalarRange: [number, number];
   downsampled: boolean;
   cropped: boolean;

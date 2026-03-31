@@ -3,11 +3,19 @@ import { SliceCanvas } from './SliceCanvas';
 
 interface PanoramaDisplayProps {
   panorama: PanoramaImage | null;
+  crosshairPoint?: { x: number; y: number };
   className?: string;
   stage?: 'import' | 'viewer';
+  onSelect?: (point: { xRatio: number; yRatio: number }) => void;
 }
 
-export function PanoramaDisplay({ panorama, className, stage = 'viewer' }: PanoramaDisplayProps) {
+export function PanoramaDisplay({
+  panorama,
+  crosshairPoint,
+  className,
+  stage = 'viewer',
+  onSelect,
+}: PanoramaDisplayProps) {
   const label = panorama
     ? panorama.mode === 'metadata-seeded'
       ? 'Metadata-seeded curve'
@@ -20,10 +28,13 @@ export function PanoramaDisplay({ panorama, className, stage = 'viewer' }: Panor
     <div className={['h-full min-h-0', className ?? ''].join(' ').trim()} data-stage={stage}>
       <SliceCanvas
         image={panorama ? { width: panorama.width, height: panorama.height, data: panorama.data } : null}
-        crosshair={false}
+        crosshair={Boolean(panorama)}
+        crosshairPoint={crosshairPoint}
+        crosshairSpace={panorama ? [panorama.width, panorama.height] : undefined}
         label={label}
         stage={stage}
         fit="contain"
+        onSelect={onSelect}
       />
     </div>
   );
