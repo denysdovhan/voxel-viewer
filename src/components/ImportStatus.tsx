@@ -7,8 +7,35 @@ interface ImportStatusProps {
   className?: string;
 }
 
+function resolveProgressPercent(progress: ImportProgress): number {
+  const local = progress.total > 0 ? progress.completed / progress.total : 0;
+
+  switch (progress.stage) {
+    case 'idle':
+      return 0;
+    case 'scanning':
+      return 4 + local * 4;
+    case 'parsing-meta':
+      return 8 + local * 10;
+    case 'assembling':
+      return 18 + local * 8;
+    case 'inflating-slices':
+      return 26 + local * 54;
+    case 'preparing-panorama':
+      return 80 + local * 12;
+    case 'preparing-3d':
+      return 92 + local * 6;
+    case 'ready':
+      return 100;
+    case 'error':
+      return Math.max(8, Math.min(99, local * 100));
+    default:
+      return local * 100;
+  }
+}
+
 export function ImportStatus({ progress, issue, stage = 'import', className }: ImportStatusProps) {
-  const pct = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
+  const pct = Math.round(resolveProgressPercent(progress));
 
   return (
     <div

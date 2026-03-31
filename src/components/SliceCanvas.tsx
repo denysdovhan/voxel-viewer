@@ -10,6 +10,7 @@ interface SliceCanvasProps {
   className?: string;
   stage?: 'import' | 'viewer';
   fit?: 'contain' | 'cover';
+  displayAspect?: number;
   onSelect?: (point: { xRatio: number; yRatio: number }) => void;
 }
 
@@ -36,6 +37,7 @@ export function SliceCanvas({
   className,
   stage = 'viewer',
   fit = 'contain',
+  displayAspect = 1,
   onSelect,
 }: SliceCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -84,12 +86,14 @@ export function SliceCanvas({
   const imageRect = useMemo<Rect>(() => {
     if (!image) return FALLBACK_RECT;
 
+    const displayWidth = image.width * Math.max(0.1, displayAspect);
+    const displayHeight = image.height;
     const scale = fit === 'cover'
-      ? Math.max(surfaceSize.width / image.width, surfaceSize.height / image.height)
-      : Math.min(surfaceSize.width / image.width, surfaceSize.height / image.height);
+      ? Math.max(surfaceSize.width / displayWidth, surfaceSize.height / displayHeight)
+      : Math.min(surfaceSize.width / displayWidth, surfaceSize.height / displayHeight);
 
-    const width = image.width * scale;
-    const height = image.height * scale;
+    const width = displayWidth * scale;
+    const height = displayHeight * scale;
 
     return {
       left: (surfaceSize.width - width) / 2,
@@ -97,7 +101,7 @@ export function SliceCanvas({
       width,
       height,
     };
-  }, [fit, image, surfaceSize.height, surfaceSize.width]);
+  }, [displayAspect, fit, image, surfaceSize.height, surfaceSize.width]);
 
   const [cursorWidth = image?.width ?? 1, cursorHeight = image?.height ?? 1] = crosshairSpace ?? [];
   const x = crosshairPoint

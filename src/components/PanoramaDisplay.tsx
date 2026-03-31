@@ -31,6 +31,7 @@ export function PanoramaDisplay({
         crosshair={Boolean(panorama)}
         crosshairPoint={crosshairPoint}
         crosshairSpace={panorama ? [panorama.width, panorama.height] : undefined}
+        displayAspect={panorama?.displayAspect}
         label={label}
         stage={stage}
         fit="contain"

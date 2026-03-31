@@ -28,7 +28,7 @@ export function ViewportFrame({
       className={[
         'relative h-full min-h-0 overflow-hidden bg-slate-950/80',
         chrome === 'framed' ? 'rounded border border-slate-800' : 'rounded-none border-0',
-        density === 'compact' ? 'p-0' : 'p-0',
+        'p-0',
         className ?? '',
       ].join(' ').trim()}
       data-stage={stage}

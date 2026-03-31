@@ -1,7 +1,6 @@
 interface FolderPickerProps {
   directorySupported: boolean;
   onPickDirectory: () => void;
-  onPickFiles: () => void;
   onReset?: () => void;
   busy?: boolean;
   detail?: string;
@@ -13,7 +12,6 @@ interface FolderPickerProps {
 export function FolderPicker({
   directorySupported,
   onPickDirectory,
-  onPickFiles,
   onReset,
   busy,
   detail,
@@ -52,14 +50,6 @@ export function FolderPicker({
           disabled={busy || !directorySupported}
         >
           {directorySupported ? 'Open folder' : 'Directory API unavailable'}
-        </button>
-        <button
-          type="button"
-          className="inline-flex items-center rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm font-medium text-slate-100 transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={onPickFiles}
-          disabled={busy}
-        >
-          Use folder input
         </button>
         {onReset ? (
           <button

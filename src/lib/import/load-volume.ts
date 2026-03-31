@@ -1,7 +1,6 @@
 import type {
   ImportProgress,
   LoadedVolume,
-  PanoramaImage,
   PanoramaMeta,
   ParsedVolumeMeta,
   PreparedVolumeFor3D,
@@ -23,7 +22,7 @@ type WorkerEvent =
       volume: LoadedVolume;
       meta: ParsedVolumeMeta;
       panorama?: PanoramaMeta;
-      panoramaImage: PanoramaImage;
+      panoramaImage: null;
       prepared3D: PreparedVolumeFor3D;
     }
   | { type: 'error'; error: ImportFailure };
@@ -32,7 +31,7 @@ export interface LoadedImport {
   volume: LoadedVolume;
   meta: ParsedVolumeMeta;
   panorama?: PanoramaMeta;
-  panoramaImage: PanoramaImage;
+  panoramaImage: null;
   prepared3D: PreparedVolumeFor3D;
 }
 

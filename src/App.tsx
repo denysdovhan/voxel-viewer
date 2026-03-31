@@ -2,34 +2,28 @@ import {
   useEffect,
   useEffectEvent,
   useMemo,
-  useRef,
   useState,
-  type ChangeEvent,
 } from 'react';
 import debounce from 'lodash/debounce';
 import {
   FolderPicker,
   ImportStatus,
-  PanoramaDisplay,
   SliceCanvas,
   ViewportFrame,
   VolumeViewport3D,
 } from './components';
 import { loadVolumeFromFolder } from './lib/import/load-volume';
-import { fromDirectoryHandle, fromFileList } from './lib/import/scan-folder';
+import { fromDirectoryHandle } from './lib/import/scan-folder';
 import {
   clamp,
   extractAxialImage,
   extractCoronalImage,
   extractSagittalImage,
-  projectCursorToPanorama,
-  resolvePanoramaSelection,
 } from './lib/volume';
 import type {
   ImportIssue,
   ImportProgress,
   LoadedVolume,
-  PanoramaImage,
   PreparedVolumeFor3D,
   ScanFolderSource,
   SliceImage,
@@ -119,7 +113,6 @@ function formatSpacing(spacing: [number, number, number]): string {
 }
 
 export default function App() {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [progress, setProgress] = useState<ImportProgress>(IDLE_PROGRESS);
   const [issue, setIssue] = useState<ImportIssue | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
@@ -128,7 +121,6 @@ export default function App() {
   const [windowLevelDraft, setWindowLevelDraft] = useState<SliceWindowLevel>(DEFAULT_WINDOW_LEVEL);
   const [windowLevel, setWindowLevel] = useState<SliceWindowLevel>(DEFAULT_WINDOW_LEVEL);
   const [downsampled3D, setDownsampled3D] = useState(false);
-  const [panoramaImage, setPanoramaImage] = useState<PanoramaImage | null>(null);
   const [prepared3D, setPrepared3D] = useState<PreparedVolumeFor3D | null>(null);
   const directorySupported =
     typeof window !== 'undefined' &&
@@ -145,15 +137,6 @@ export default function App() {
 
   useEffect(() => () => debouncedCommitWindowLevel.cancel(), [debouncedCommitWindowLevel]);
 
-  useEffect(() => {
-    const input = fileInputRef.current;
-    if (!input) return;
-
-    input.setAttribute('webkitdirectory', '');
-    input.setAttribute('directory', '');
-    input.multiple = true;
-  }, []);
-
   const resetViewer = useEffectEvent(() => {
     debouncedCommitWindowLevel.cancel();
     setIssue(null);
@@ -162,7 +145,6 @@ export default function App() {
     setCursor(null);
     setWindowLevelDraft(DEFAULT_WINDOW_LEVEL);
     setWindowLevel(DEFAULT_WINDOW_LEVEL);
-    setPanoramaImage(null);
     setPrepared3D(null);
     setDownsampled3D(false);
     setProgress(IDLE_PROGRESS);
@@ -182,9 +164,10 @@ export default function App() {
       const loaded = await loadVolumeFromFolder(source, setProgress);
       setIssue(null);
       setVolume(loaded.volume);
-      setPanoramaImage(loaded.panoramaImage);
       setPrepared3D(loaded.prepared3D);
       setCursor(createCenterCursor(loaded.volume));
+      setWindowLevelDraft(DEFAULT_WINDOW_LEVEL);
+      setWindowLevel(DEFAULT_WINDOW_LEVEL);
       setProgress({
         stage: 'ready',
         detail: `Loaded ${loaded.meta.scanId}`,
@@ -214,11 +197,6 @@ export default function App() {
     };
   }, [cursor, volume, windowLevel]);
 
-  const panoramaCrosshair = useMemo(
-    () => projectCursorToPanorama(panoramaImage, cursor),
-    [cursor, panoramaImage],
-  );
-
   const dimensions = volume?.meta.dimensions ?? [0, 0, 0];
   const spacing = volume?.meta.spacing ?? [0, 0, 0];
 
@@ -235,18 +213,6 @@ export default function App() {
         setIssue(makeImportIssue(error));
       }
     }
-  };
-
-  const openFallbackInput = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFilesChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    event.target.value = '';
-    if (!files?.length) return;
-
-    await loadSource(fromFileList(files));
   };
 
   const updateCursor = (axis: 'axial' | 'coronal' | 'sagittal') =>
@@ -280,11 +246,6 @@ export default function App() {
         };
       });
     };
-
-  const updateCursorFromPanorama = ({ xRatio, yRatio }: { xRatio: number; yRatio: number }) => {
-    if (!volume || !panoramaImage) return;
-    setCursor(resolvePanoramaSelection(volume, panoramaImage, { xRatio, yRatio }));
-  };
 
   const updateWindowLevelDraft = (next: SliceWindowLevel) => {
     setWindowLevelDraft(next);
@@ -327,8 +288,6 @@ export default function App() {
 
   return (
     <main className="h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <input ref={fileInputRef} className="hidden" type="file" onChange={handleFilesChange} />
-
       {stage === 'import' ? (
         busy ? (
           <div className="mx-auto flex min-h-screen max-w-lg items-center justify-center px-4 py-8">
@@ -360,18 +319,17 @@ export default function App() {
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-slate-400">
                   Import a local scan folder, parse it fully in-browser, and navigate with a
-                  panorama, linked orthogonal views, and a shader-based 3D preview.
+                  larger 3D overview plus linked orthogonal views.
                 </p>
               </section>
 
               <FolderPicker
                 directorySupported={directorySupported}
                 onPickDirectory={() => void openDirectory()}
-                onPickFiles={openFallbackInput}
                 onReset={resetViewer}
                 busy={busy}
                 detail={sourceLabel ? `Source: ${sourceLabel}` : 'Chromium desktop over HTTPS or localhost recommended'}
-                unsupportedHint="Use Chromium desktop for direct folder picking. The file-input fallback still works when available."
+                unsupportedHint="Use Chromium desktop for direct folder picking."
                 stage="import"
               />
 
@@ -384,37 +342,14 @@ export default function App() {
           </div>
         )
       ) : (
-        <div className="h-full overflow-hidden p-2">
-          <div className="grid h-full grid-cols-[minmax(0,1fr)_minmax(288px,22vw)] gap-2">
+        <div className="h-full overflow-hidden bg-slate-800">
+          <div className="grid h-full grid-cols-[minmax(0,1fr)_minmax(288px,22vw)] gap-px">
             <section className="min-h-0 min-w-0">
-              <div className="grid h-full min-h-0 min-w-0 grid-rows-[0.94fr_1.06fr] gap-0">
-                <div className="grid min-h-0 min-w-0 grid-cols-[minmax(0,1.85fr)_minmax(0,0.95fr)] gap-0">
-                  <ViewportFrame
-                    title="Panorama"
-                    subtitle="Primary navigation along the jaw"
-                    status={
-                      panoramaImage
-                        ? panoramaImage.mode === 'metadata-seeded'
-                          ? 'Guided curve'
-                          : 'Volume curve'
-                        : 'Preparing'
-                    }
-                    density="compact"
-                    chrome="flush"
-                    className="rounded-none border border-slate-800/80"
-                  >
-                    <PanoramaDisplay
-                      panorama={panoramaImage}
-                      crosshairPoint={panoramaCrosshair}
-                      onSelect={updateCursorFromPanorama}
-                      stage="viewer"
-                      className="h-full"
-                    />
-                  </ViewportFrame>
-
+              <div className="grid h-full min-h-0 min-w-0 grid-rows-[1.22fr_0.95fr] gap-px bg-slate-800">
+                <div className="grid min-h-0 min-w-0 grid-cols-1 gap-px bg-slate-800">
                   <ViewportFrame
                     title="3D"
-                    subtitle="Jaw overview"
+                    subtitle="Main navigation volume"
                     status={
                       prepared3D
                         ? prepared3D.downsampled
@@ -424,20 +359,22 @@ export default function App() {
                     }
                     density="compact"
                     chrome="flush"
-                    className="rounded-none border border-slate-800/80"
                   >
-                    <VolumeViewport3D volume={prepared3D} onDownsampledChange={setDownsampled3D} />
+                    <VolumeViewport3D
+                      volume={prepared3D}
+                      cursor={cursor}
+                      onDownsampledChange={setDownsampled3D}
+                    />
                   </ViewportFrame>
                 </div>
 
-                <div className="grid min-h-0 min-w-0 grid-cols-3 gap-0">
+                <div className="grid min-h-0 min-w-0 grid-cols-3 gap-px bg-slate-800">
                   <ViewportFrame
                     title="Coronal"
                     subtitle="Frontal · superior at top"
                     status={cursor ? `Y ${cursor.y + 1}/${Math.max(1, dimensions[1])}` : 'No volume'}
                     density="compact"
                     chrome="flush"
-                    className="rounded-none border border-slate-800/80"
                   >
                     <SliceCanvas
                       image={slices.coronal}
@@ -456,7 +393,6 @@ export default function App() {
                     status={cursor ? `X ${cursor.x + 1}/${Math.max(1, dimensions[0])}` : 'No volume'}
                     density="compact"
                     chrome="flush"
-                    className="rounded-none border border-slate-800/80"
                   >
                     <SliceCanvas
                       image={slices.sagittal}
@@ -475,7 +411,6 @@ export default function App() {
                     status={cursor ? `Z ${cursor.z + 1}/${Math.max(1, dimensions[2])}` : 'No volume'}
                     density="compact"
                     chrome="flush"
-                    className="rounded-none border border-slate-800/80"
                   >
                     <SliceCanvas
                       image={slices.axial}
@@ -491,7 +426,7 @@ export default function App() {
               </div>
             </section>
 
-            <aside className="grid min-w-0 min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] gap-2 overflow-hidden">
+            <aside className="grid min-w-0 min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] overflow-hidden">
               <section className="min-w-0 rounded border border-slate-800 bg-slate-950/80 p-2.5">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Study</div>
                 <div className="mt-1 truncate text-sm font-semibold text-slate-100" title={volume?.meta.scanId}>
@@ -566,10 +501,13 @@ export default function App() {
                   Coronal and sagittal views are flipped so superior anatomy stays at the top.
                 </div>
                 <div className="mt-2 text-xs text-slate-400">
-                  {prepared3D?.cropped ? '3D preview cropped to dense anatomy.' : '3D preview using full volume.'}
+                  {prepared3D?.cropped ? '3D cropped to dense anatomy.' : '3D using full volume.'}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {downsampled3D ? 'Downsampled after crop for responsiveness.' : 'Native crop resolution.'}
+                  {downsampled3D ? 'Downsampled after crop.' : 'Higher-resolution crop.'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Colored planes in 3D match the current coronal, sagittal, and axial slices.
                 </div>
               </section>
 
@@ -581,13 +519,6 @@ export default function App() {
                     onClick={() => void openDirectory()}
                   >
                     Open folder
-                  </button>
-                  <button
-                    type="button"
-                    className={`${SECONDARY_BUTTON} w-full justify-center`}
-                    onClick={openFallbackInput}
-                  >
-                    Use folder input
                   </button>
                   <button
                     type="button"

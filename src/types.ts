@@ -85,10 +85,13 @@ export interface PanoramaImage {
   mode: 'metadata-seeded' | 'volume-derived' | 'fallback-arch';
   path: Float32Array;
   zRange: [number, number];
+  displayAspect: number;
 }
 
 export interface PreparedVolumeFor3D {
   dimensions: [number, number, number];
+  sourceDimensions: [number, number, number];
+  origin: [number, number, number];
   spacing: [number, number, number];
   voxels: Uint8Array;
   scalarRange: [number, number];

@@ -1,10 +1,18 @@
-import type { PreparedVolumeFor3D } from '../../types';
+import type { PreparedVolumeFor3D, VolumeCursor } from '../../types';
 
 type ThreeModule = any;
-type OrbitControlsModule = any;
+type TrackballControlsModule = any;
 type VolumeShaderModule = any;
 
 export interface ThreePreviewInstance {
+  dispose: () => void;
+  focusCursor: (cursor: VolumeCursor | null) => void;
+  resetView: () => void;
+}
+
+interface CursorPlaneSet {
+  root: any;
+  update: (target: any) => void;
   dispose: () => void;
 }
 
@@ -12,21 +20,21 @@ export async function createThreePreview(
   host: HTMLDivElement,
   volume: PreparedVolumeFor3D,
 ): Promise<ThreePreviewInstance> {
-  const [three, orbitControls, volumeShader] = await Promise.all([
+  const [three, trackballControls, volumeShader] = await Promise.all([
     // @ts-expect-error three ships JS entrypoints here in this workspace
     import('three'),
     // @ts-expect-error three ships JS entrypoints here in this workspace
-    import('three/examples/jsm/controls/OrbitControls.js'),
+    import('three/examples/jsm/controls/TrackballControls.js'),
     // @ts-expect-error three ships JS entrypoints here in this workspace
     import('three/examples/jsm/shaders/VolumeShader.js'),
   ]);
 
-  return buildPreview(three, orbitControls, volumeShader, host, volume);
+  return buildPreview(three, trackballControls, volumeShader, host, volume);
 }
 
 function buildPreview(
   three: ThreeModule,
-  orbitControls: OrbitControlsModule,
+  trackballControls: TrackballControlsModule,
   volumeShader: VolumeShaderModule,
   host: HTMLDivElement,
   volume: PreparedVolumeFor3D,
@@ -44,25 +52,26 @@ function buildPreview(
   renderer.domElement.style.display = 'block';
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
   renderer.outputColorSpace = three.SRGBColorSpace;
   renderer.setClearColor(0x050b13, 1);
   host.appendChild(renderer.domElement);
 
   const camera = new three.PerspectiveCamera(
-    38,
+    12,
     Math.max(1, host.clientWidth) / Math.max(1, host.clientHeight),
     0.1,
     500,
   );
 
-  const controls = new orbitControls.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.08;
-  controls.rotateSpeed = 0.45;
-  controls.zoomSpeed = 0.75;
-  controls.panSpeed = 0.5;
+  const controls = new trackballControls.TrackballControls(camera, renderer.domElement);
+  controls.rotateSpeed = 0.95;
+  controls.zoomSpeed = 1.05;
+  controls.panSpeed = 0.3;
+  controls.dynamicDampingFactor = 0.18;
+  controls.staticMoving = false;
+  controls.noPan = true;
   controls.minDistance = 1.2;
   controls.maxDistance = 10;
 
@@ -87,18 +96,24 @@ function buildPreview(
     ((volume.dimensions[1] - 1) / 2) * axisScale[1],
     ((volume.dimensions[2] - 1) / 2) * axisScale[2],
   );
+  const cursorPlanes = buildCursorPlanes(three, worldSize, center);
+  scene.add(cursorPlanes.root);
   camera.near = Math.max(0.1, maxWorldEdge / 2048);
   camera.far = maxWorldEdge * 8;
   camera.updateProjectionMatrix();
-  camera.position.set(
-    center.x + maxWorldEdge * 0.18,
-    center.y - maxWorldEdge * 1.05,
-    center.z + maxWorldEdge * 1.35,
+  const initialTarget = center.clone();
+  const initialOffset = new three.Vector3(
+    maxWorldEdge * 0.68,
+    -maxWorldEdge * 2.9,
+    maxWorldEdge * 4.25,
   );
-  camera.lookAt(center);
+  let currentTarget = initialTarget.clone();
+  camera.position.copy(initialTarget.clone().add(initialOffset));
+  camera.lookAt(currentTarget);
   controls.minDistance = maxWorldEdge * 0.25;
-  controls.maxDistance = maxWorldEdge * 4.5;
-  controls.target.copy(center);
+  controls.maxDistance = maxWorldEdge * 9;
+  controls.target.copy(currentTarget);
+  cursorPlanes.update(currentTarget);
   controls.update();
 
   let frame = 0;
@@ -108,8 +123,10 @@ function buildPreview(
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     renderer.setSize(width, height, false);
+    controls.handleResize?.();
   });
   resizeObserver.observe(host);
+  controls.handleResize?.();
 
   const render = () => {
     frame = window.requestAnimationFrame(render);
@@ -119,18 +136,139 @@ function buildPreview(
   render();
 
   return {
+    focusCursor(cursor) {
+      if (!cursor) {
+        currentTarget = initialTarget.clone();
+        cursorPlanes.update(currentTarget);
+        return;
+      }
+      const target = cursorToWorldTarget(three, volume, axisScale, cursor);
+      currentTarget = target;
+      controls.target.copy(currentTarget);
+      cursorPlanes.update(currentTarget);
+      camera.lookAt(currentTarget);
+      controls.update();
+    },
+    resetView() {
+      camera.position.copy(currentTarget.clone().add(initialOffset));
+      controls.target.copy(currentTarget);
+      camera.lookAt(currentTarget);
+      controls.update();
+    },
     dispose() {
       window.cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       controls.dispose();
       mesh.geometry.dispose();
       material.dispose();
+      cursorPlanes.dispose();
       texture.dispose();
       colormap.dispose();
       renderer.dispose();
       host.replaceChildren();
     },
   };
+}
+
+function buildCursorPlanes(
+  three: ThreeModule,
+  worldSize: readonly [number, number, number],
+  center: any,
+): CursorPlaneSet {
+  const root = new three.Group();
+  const materials = [
+    new three.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.11,
+      side: three.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    }),
+    new three.MeshBasicMaterial({
+      color: 0xf59e0b,
+      transparent: true,
+      opacity: 0.1,
+      side: three.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    }),
+    new three.MeshBasicMaterial({
+      color: 0xa78bfa,
+      transparent: true,
+      opacity: 0.1,
+      side: three.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    }),
+  ];
+  const lineMaterials = [
+    new three.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85, depthTest: false }),
+    new three.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.8, depthTest: false }),
+    new three.LineBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.8, depthTest: false }),
+  ];
+
+  const xyGeometry = new three.PlaneGeometry(worldSize[0], worldSize[1]);
+  const xzGeometry = new three.PlaneGeometry(worldSize[0], worldSize[2]);
+  const yzGeometry = new three.PlaneGeometry(worldSize[1], worldSize[2]);
+
+  const xyPlane = new three.Mesh(xyGeometry, materials[0]);
+  const xzPlane = new three.Mesh(xzGeometry, materials[1]);
+  const yzPlane = new three.Mesh(yzGeometry, materials[2]);
+  xzPlane.rotation.x = Math.PI / 2;
+  yzPlane.rotation.y = Math.PI / 2;
+
+  const xyEdges = new three.LineSegments(new three.EdgesGeometry(xyGeometry), lineMaterials[0]);
+  const xzEdges = new three.LineSegments(new three.EdgesGeometry(xzGeometry), lineMaterials[1]);
+  const yzEdges = new three.LineSegments(new three.EdgesGeometry(yzGeometry), lineMaterials[2]);
+  xzEdges.rotation.x = Math.PI / 2;
+  yzEdges.rotation.y = Math.PI / 2;
+
+  for (const object of [xyPlane, xzPlane, yzPlane, xyEdges, xzEdges, yzEdges]) {
+    object.renderOrder = 4;
+    root.add(object);
+  }
+
+  const update = (target: any) => {
+    xyPlane.position.set(center.x, center.y, target.z);
+    xzPlane.position.set(center.x, target.y, center.z);
+    yzPlane.position.set(target.x, center.y, center.z);
+    xyEdges.position.copy(xyPlane.position);
+    xzEdges.position.copy(xzPlane.position);
+    yzEdges.position.copy(yzPlane.position);
+  };
+
+  const dispose = () => {
+    xyGeometry.dispose();
+    xzGeometry.dispose();
+    yzGeometry.dispose();
+    (xyEdges.geometry as any).dispose?.();
+    (xzEdges.geometry as any).dispose?.();
+    (yzEdges.geometry as any).dispose?.();
+    for (const material of [...materials, ...lineMaterials]) material.dispose();
+  };
+
+  return { root, update, dispose };
+}
+
+function cursorToWorldTarget(
+  three: ThreeModule,
+  volume: PreparedVolumeFor3D,
+  axisScale: readonly [number, number, number],
+  cursor: VolumeCursor,
+) {
+  const ratioX = clampRatio(cursor.x - volume.origin[0], volume.sourceDimensions[0]);
+  const ratioY = clampRatio(cursor.y - volume.origin[1], volume.sourceDimensions[1]);
+  const ratioZ = clampRatio(cursor.z - volume.origin[2], volume.sourceDimensions[2]);
+  const localX = ratioX * Math.max(1, volume.dimensions[0] - 1);
+  const localY = ratioY * Math.max(1, volume.dimensions[1] - 1);
+  const localZ = ratioZ * Math.max(1, volume.dimensions[2] - 1);
+  return new three.Vector3(localX * axisScale[0], localY * axisScale[1], localZ * axisScale[2]);
+}
+
+function clampRatio(offset: number, size: number): number {
+  if (size <= 1) return 0;
+  return Math.min(1, Math.max(0, offset / (size - 1)));
 }
 
 function buildTexture(three: ThreeModule, volume: PreparedVolumeFor3D) {

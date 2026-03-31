@@ -1,11 +1,13 @@
 # Static Web Viewer For GALILEOS Folders
 
 ## Summary
+
 Build option 1 as a static, local-first web app that can be hosted on any static host and opens a user-selected local scan folder in the browser. The app will target Chromium browsers on macOS first because directory access depends on `showDirectoryPicker()` in a secure context; the intended access modes are `https://...` hosting and `http://localhost`, not `file://`. Source basis: MDN documents `showDirectoryPicker()` as secure-context-only and not baseline across major browsers, and confirms File System API access is available in Web Workers. See [MDN `showDirectoryPicker()`](https://developer.mozilla.org/en-US/docs/Web/API/Window/showDirectoryPicker) and [MDN File System API](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API).
 
 Use `React + TypeScript + Vite` for the shell, `vtk.js` for 3D/MPR rendering, and `fflate` in a Web Worker for gzip inflation. The app remains reference-only, not diagnostic/treatment-planning software.
 
 ## Key Changes
+
 - App architecture:
   - Pure static frontend build with no backend, no database, no upload service.
   - Deployable to GitHub Pages, Netlify, Vercel static export, S3/Cloudflare Pages, or any HTTPS static host.
@@ -51,6 +53,7 @@ Use `React + TypeScript + Vite` for the shell, `vtk.js` for 3D/MPR rendering, an
   - No editable curve, measurements, annotations, or implant planning in v1.
 
 ## Test Plan
+
 - Import and parsing:
   - Open the sample folder from a hosted HTTPS build.
   - Open the sample folder from localhost during development.
@@ -68,6 +71,7 @@ Use `React + TypeScript + Vite` for the shell, `vtk.js` for 3D/MPR rendering, an
   - App must not require direct filesystem access before a user gesture.
 
 ## Assumptions
+
 - The app must be hostable as a static site and must read scans from a user-selected local folder in-browser.
 - Supported primary browser for v1 is Chromium desktop on macOS.
 - v1 is reference-only and explicitly not for diagnosis or treatment planning.
