@@ -103,8 +103,6 @@ function buildPreview(
   const cursorPlanes = buildCursorPlanes(three, worldSize, center);
   scene.add(cursorPlanes.root);
   camera.near = Math.max(0.1, maxWorldEdge / 2048);
-  camera.far = maxWorldEdge * 8;
-  camera.updateProjectionMatrix();
   const initialTarget = center.clone();
   const initialOffset = new three.Vector3(
     maxWorldEdge * 0.68,
@@ -114,8 +112,7 @@ function buildPreview(
   let currentTarget = initialTarget.clone();
   camera.position.copy(initialTarget.clone().add(initialOffset));
   camera.lookAt(currentTarget);
-  controls.minDistance = maxWorldEdge * 0.25;
-  controls.maxDistance = maxWorldEdge * 9;
+  applyDistanceLimits(camera, controls, worldSize, currentTarget);
   controls.target.copy(currentTarget);
   cursorPlanes.update(currentTarget);
   controls.update();
@@ -148,6 +145,7 @@ function buildPreview(
       }
       const target = cursorToWorldTarget(three, volume, axisScale, cursor);
       currentTarget = target;
+      applyDistanceLimits(camera, controls, worldSize, currentTarget);
       controls.target.copy(currentTarget);
       cursorPlanes.update(currentTarget);
       camera.lookAt(currentTarget);
@@ -208,6 +206,11 @@ function buildCursorPlanes(
     new three.LineBasicMaterial({ color: PLANE_COLORS.coronal, transparent: true, opacity: 0.8, depthTest: false }),
     new three.LineBasicMaterial({ color: PLANE_COLORS.sagittal, transparent: true, opacity: 0.8, depthTest: false }),
   ];
+  const intersectionMaterials = [
+    new three.LineBasicMaterial({ color: PLANE_COLORS.sagittal, transparent: true, opacity: 0.95, depthTest: false }),
+    new three.LineBasicMaterial({ color: PLANE_COLORS.coronal, transparent: true, opacity: 0.95, depthTest: false }),
+    new three.LineBasicMaterial({ color: PLANE_COLORS.axial, transparent: true, opacity: 0.95, depthTest: false }),
+  ];
 
   const xyGeometry = new three.PlaneGeometry(
     worldSize[0] * CURSOR_PLANE_OVERSCAN,
@@ -234,7 +237,20 @@ function buildCursorPlanes(
   xzEdges.rotation.x = Math.PI / 2;
   yzEdges.rotation.y = Math.PI / 2;
 
-  for (const object of [xyPlane, xzPlane, yzPlane, xyEdges, xzEdges, yzEdges]) {
+  const xIntersection = new three.Line(
+    buildIntersectionGeometry(three, [-worldSize[0] * CURSOR_PLANE_OVERSCAN * 0.5, 0, 0], [worldSize[0] * CURSOR_PLANE_OVERSCAN * 0.5, 0, 0]),
+    intersectionMaterials[0],
+  );
+  const yIntersection = new three.Line(
+    buildIntersectionGeometry(three, [0, -worldSize[1] * CURSOR_PLANE_OVERSCAN * 0.5, 0], [0, worldSize[1] * CURSOR_PLANE_OVERSCAN * 0.5, 0]),
+    intersectionMaterials[1],
+  );
+  const zIntersection = new three.Line(
+    buildIntersectionGeometry(three, [0, 0, -worldSize[2] * CURSOR_PLANE_OVERSCAN * 0.5], [0, 0, worldSize[2] * CURSOR_PLANE_OVERSCAN * 0.5]),
+    intersectionMaterials[2],
+  );
+
+  for (const object of [xyPlane, xzPlane, yzPlane, xyEdges, xzEdges, yzEdges, xIntersection, yIntersection, zIntersection]) {
     object.renderOrder = 4;
     root.add(object);
   }
@@ -246,6 +262,9 @@ function buildCursorPlanes(
     xyEdges.position.copy(xyPlane.position);
     xzEdges.position.copy(xzPlane.position);
     yzEdges.position.copy(yzPlane.position);
+    xIntersection.position.set(center.x, target.y, target.z);
+    yIntersection.position.set(target.x, center.y, target.z);
+    zIntersection.position.set(target.x, target.y, center.z);
   };
 
   const dispose = () => {
@@ -255,10 +274,66 @@ function buildCursorPlanes(
     (xyEdges.geometry as any).dispose?.();
     (xzEdges.geometry as any).dispose?.();
     (yzEdges.geometry as any).dispose?.();
-    for (const material of [...materials, ...lineMaterials]) material.dispose();
+    (xIntersection.geometry as any).dispose?.();
+    (yIntersection.geometry as any).dispose?.();
+    (zIntersection.geometry as any).dispose?.();
+    for (const material of [...materials, ...lineMaterials, ...intersectionMaterials]) material.dispose();
   };
 
   return { root, update, dispose };
+}
+
+function buildIntersectionGeometry(
+  three: ThreeModule,
+  start: readonly [number, number, number],
+  end: readonly [number, number, number],
+) {
+  const geometry = new three.BufferGeometry();
+  geometry.setFromPoints([
+    new three.Vector3(...start),
+    new three.Vector3(...end),
+  ]);
+  return geometry;
+}
+
+function applyDistanceLimits(
+  camera: any,
+  controls: any,
+  worldSize: readonly [number, number, number],
+  target: { x: number; y: number; z: number },
+) {
+  const minDistance = resolveMinimumCameraDistance(worldSize, target);
+  controls.minDistance = minDistance;
+  controls.maxDistance = Math.max(minDistance * 12, Math.max(...worldSize) * 9);
+  const maxVisibleDistance = controls.maxDistance + minDistance;
+  camera.far = Math.max(maxVisibleDistance * 1.1, Math.max(...worldSize) * 8);
+  camera.updateProjectionMatrix();
+}
+
+function resolveMinimumCameraDistance(
+  worldSize: readonly [number, number, number],
+  target: { x: number; y: number; z: number },
+) {
+  const corners = [
+    [0, 0, 0],
+    [worldSize[0], 0, 0],
+    [0, worldSize[1], 0],
+    [0, 0, worldSize[2]],
+    [worldSize[0], worldSize[1], 0],
+    [worldSize[0], 0, worldSize[2]],
+    [0, worldSize[1], worldSize[2]],
+    [worldSize[0], worldSize[1], worldSize[2]],
+  ] as const;
+
+  let furthestCornerDistance = 1;
+  for (const [x, y, z] of corners) {
+    const dx = x - target.x;
+    const dy = y - target.y;
+    const dz = z - target.z;
+    furthestCornerDistance = Math.max(furthestCornerDistance, Math.hypot(dx, dy, dz));
+  }
+
+  return furthestCornerDistance * 1.02;
 }
 
 function cursorToWorldTarget(
