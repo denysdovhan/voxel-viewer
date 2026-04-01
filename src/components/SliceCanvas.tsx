@@ -6,6 +6,7 @@ interface SliceCanvasProps {
   crosshairPoint?: { x: number; y: number };
   crosshairSpace?: [number, number];
   crosshair?: boolean;
+  crosshairColors?: { vertical: string; horizontal: string };
   label?: string;
   className?: string;
   stage?: 'import' | 'viewer';
@@ -33,6 +34,7 @@ export function SliceCanvas({
   crosshairPoint,
   crosshairSpace,
   crosshair = true,
+  crosshairColors,
   label,
   className,
   stage = 'viewer',
@@ -151,12 +153,20 @@ export function SliceCanvas({
         {crosshair ? (
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <span
-              className="absolute top-0 bottom-0 w-px bg-sky-300/70"
-              style={{ left: `${x}px` }}
+              className="absolute top-0 bottom-0 w-px"
+              style={{
+                left: `${x}px`,
+                backgroundColor: crosshairColors?.vertical ?? '#7dd3fc',
+                opacity: 0.78,
+              }}
             />
             <span
-              className="absolute left-0 right-0 h-px bg-sky-300/70"
-              style={{ top: `${y}px` }}
+              className="absolute left-0 right-0 h-px"
+              style={{
+                top: `${y}px`,
+                backgroundColor: crosshairColors?.horizontal ?? '#7dd3fc',
+                opacity: 0.78,
+              }}
             />
           </div>
         ) : null}

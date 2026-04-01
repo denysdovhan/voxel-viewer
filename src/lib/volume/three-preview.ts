@@ -1,5 +1,7 @@
 import type { PreparedVolumeFor3D, VolumeCursor } from '../../types';
 
+import { PLANE_COLORS } from '../../constants';
+
 type ThreeModule = any;
 type TrackballControlsModule = any;
 type VolumeShaderModule = any;
@@ -175,7 +177,7 @@ function buildCursorPlanes(
   const root = new three.Group();
   const materials = [
     new three.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: PLANE_COLORS.axial,
       transparent: true,
       opacity: 0.11,
       side: three.DoubleSide,
@@ -183,7 +185,7 @@ function buildCursorPlanes(
       depthWrite: false,
     }),
     new three.MeshBasicMaterial({
-      color: 0xf59e0b,
+      color: PLANE_COLORS.coronal,
       transparent: true,
       opacity: 0.1,
       side: three.DoubleSide,
@@ -191,7 +193,7 @@ function buildCursorPlanes(
       depthWrite: false,
     }),
     new three.MeshBasicMaterial({
-      color: 0xa78bfa,
+      color: PLANE_COLORS.sagittal,
       transparent: true,
       opacity: 0.1,
       side: three.DoubleSide,
@@ -200,9 +202,9 @@ function buildCursorPlanes(
     }),
   ];
   const lineMaterials = [
-    new three.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85, depthTest: false }),
-    new three.LineBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.8, depthTest: false }),
-    new three.LineBasicMaterial({ color: 0xa78bfa, transparent: true, opacity: 0.8, depthTest: false }),
+    new three.LineBasicMaterial({ color: PLANE_COLORS.axial, transparent: true, opacity: 0.85, depthTest: false }),
+    new three.LineBasicMaterial({ color: PLANE_COLORS.coronal, transparent: true, opacity: 0.8, depthTest: false }),
+    new three.LineBasicMaterial({ color: PLANE_COLORS.sagittal, transparent: true, opacity: 0.8, depthTest: false }),
   ];
 
   const xyGeometry = new three.PlaneGeometry(worldSize[0], worldSize[1]);

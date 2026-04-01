@@ -20,6 +20,7 @@ import {
   extractCoronalImage,
   extractSagittalImage,
 } from './lib/volume';
+import { PLANE_COLORS } from './constants';
 import type {
   ImportIssue,
   ImportProgress,
@@ -376,6 +377,7 @@ export default function App() {
                       image={slices.coronal}
                       crosshairPoint={cursor ? { x: cursor.x, y: dimensions[2] - 1 - cursor.z } : undefined}
                       crosshairSpace={volume ? [dimensions[0], dimensions[2]] : undefined}
+                      crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.axial }}
                       label="XZ"
                       fit="cover"
                       onSelect={updateCursor('coronal')}
@@ -392,6 +394,7 @@ export default function App() {
                       image={slices.sagittal}
                       crosshairPoint={cursor ? { x: cursor.y, y: dimensions[2] - 1 - cursor.z } : undefined}
                       crosshairSpace={volume ? [dimensions[1], dimensions[2]] : undefined}
+                      crosshairColors={{ vertical: PLANE_COLORS.coronal, horizontal: PLANE_COLORS.axial }}
                       label="YZ"
                       fit="cover"
                       onSelect={updateCursor('sagittal')}
@@ -408,6 +411,7 @@ export default function App() {
                       image={slices.axial}
                       crosshairPoint={cursor ? { x: cursor.x, y: cursor.y } : undefined}
                       crosshairSpace={volume ? [dimensions[0], dimensions[1]] : undefined}
+                      crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.coronal }}
                       label="XY"
                       fit="cover"
                       onSelect={updateCursor('axial')}
