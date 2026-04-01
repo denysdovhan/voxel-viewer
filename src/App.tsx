@@ -1,8 +1,11 @@
 import debounce from "lodash/debounce";
 import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import {
+	Button,
 	FolderPicker,
 	ImportStatus,
+	Notice,
+	RangeField,
 	SliceCanvas,
 	ViewportFrame,
 	VolumeViewport3D,
@@ -54,11 +57,6 @@ const WINDOW_MAX = 4095;
 const LEVEL_MIN = 0;
 const LEVEL_MAX = 4095;
 const DEFAULT_MPR_ZOOM = 1;
-
-const PRIMARY_BUTTON =
-	"inline-flex items-center rounded border border-slate-700 bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50";
-const GHOST_BUTTON =
-	"inline-flex items-center rounded border border-slate-800 bg-transparent px-3 py-1.5 text-sm text-slate-300 transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50";
 
 type DirectoryPickerWindow = Window & {
 	showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
@@ -321,10 +319,10 @@ export default function App() {
 								</div>
 							</div>
 							<ImportStatus progress={progress} issue={issue} stage="import" />
-							<div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+							<Notice>
 								Reference only. Not for diagnosis, treatment planning,
 								measurements, or implant workflows.
-							</div>
+							</Notice>
 						</div>
 					</div>
 				) : (
@@ -360,10 +358,10 @@ export default function App() {
 
 							<ImportStatus progress={progress} issue={issue} stage="import" />
 
-							<div className="rounded border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+							<Notice>
 								Reference only. Not for diagnosis, treatment planning,
 								measurements, or implant workflows.
-							</div>
+							</Notice>
 						</div>
 					</div>
 				)
@@ -531,79 +529,27 @@ export default function App() {
 										Display
 									</div>
 									<div className="mt-2.5">
-										<div className="flex items-center justify-between text-xs text-slate-400">
-											<span>Window</span>
-											<span className="font-medium text-slate-200">
-												{windowLevelDraft.window}
-											</span>
-										</div>
-										<input
-											className="mt-1 w-full accent-sky-400"
-											type="range"
+										<RangeField
+											label="Window"
 											min={WINDOW_MIN}
 											max={WINDOW_MAX}
 											value={windowLevelDraft.window}
-											onChange={(event) =>
-												handleWindowChange(Number(event.target.value))
-											}
-											onPointerUp={(event) =>
-												handleWindowCommit(Number(event.currentTarget.value))
-											}
-											onPointerCancel={(event) =>
-												handleWindowCommit(Number(event.currentTarget.value))
-											}
-											onKeyUp={(event) =>
-												handleWindowCommit(
-													Number(
-														(event.currentTarget as HTMLInputElement).value,
-													),
-												)
-											}
-											onBlur={(event) =>
-												handleWindowCommit(Number(event.currentTarget.value))
-											}
+											onChange={handleWindowChange}
+											onCommit={handleWindowCommit}
+											hint="Contrast span. Smaller window = more contrast."
 										/>
-										<p className="mt-1 text-[11px] leading-4 text-slate-500">
-											Contrast span. Smaller window = more contrast.
-										</p>
 									</div>
 
 									<div className="mt-2.5">
-										<div className="flex items-center justify-between text-xs text-slate-400">
-											<span>Level</span>
-											<span className="font-medium text-slate-200">
-												{windowLevelDraft.level}
-											</span>
-										</div>
-										<input
-											className="mt-1 w-full accent-sky-400"
-											type="range"
+										<RangeField
+											label="Level"
 											min={LEVEL_MIN}
 											max={LEVEL_MAX}
 											value={windowLevelDraft.level}
-											onChange={(event) =>
-												handleLevelChange(Number(event.target.value))
-											}
-											onPointerUp={(event) =>
-												handleLevelCommit(Number(event.currentTarget.value))
-											}
-											onPointerCancel={(event) =>
-												handleLevelCommit(Number(event.currentTarget.value))
-											}
-											onKeyUp={(event) =>
-												handleLevelCommit(
-													Number(
-														(event.currentTarget as HTMLInputElement).value,
-													),
-												)
-											}
-											onBlur={(event) =>
-												handleLevelCommit(Number(event.currentTarget.value))
-											}
+											onChange={handleLevelChange}
+											onCommit={handleLevelCommit}
+											hint="Brightness bias. Higher level favors denser tissue."
 										/>
-										<p className="mt-1 text-[11px] leading-4 text-slate-500">
-											Brightness bias. Higher level favors denser tissue.
-										</p>
 									</div>
 								</section>
 
@@ -652,25 +598,21 @@ export default function App() {
 
 								<section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
 									<div className="grid grid-cols-1 gap-2">
-										<button
-											type="button"
-											className={`${PRIMARY_BUTTON} w-full justify-center`}
+										<Button
+											variant="primary"
+											block
 											onClick={() => void openDirectory()}
 										>
 											Open folder
-										</button>
-										<button
-											type="button"
-											className={`${GHOST_BUTTON} w-full justify-center`}
-											onClick={resetViewer}
-										>
+										</Button>
+										<Button variant="ghost" block onClick={resetViewer}>
 											Back to import
-										</button>
+										</Button>
 									</div>
-									<div className="mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[11px] leading-4 text-amber-200">
+									<Notice className="mt-3" compact>
 										Reference only. Not for diagnosis, treatment planning,
 										measurements, or implant workflows.
-									</div>
+									</Notice>
 								</section>
 							</aside>
 						) : null}

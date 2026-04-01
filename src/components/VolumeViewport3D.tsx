@@ -4,6 +4,7 @@ import {
 	type ThreePreviewInstance,
 } from "../lib/volume/three-preview";
 import type { PreparedVolumeFor3D, VolumeCursor } from "../types";
+import { Button } from "./Button";
 
 interface VolumeViewport3DProps {
 	volume: PreparedVolumeFor3D | null;
@@ -143,27 +144,27 @@ export function VolumeViewport3D({
 			/>
 			<div className="absolute inset-0 z-20 pointer-events-none">
 				<div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
-					<button
-						type="button"
-						className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+					<Button
+						variant="overlay"
+						size="sm"
 						onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
 					>
 						{axisViewsVisible ? "Hide axis views" : "Show axis views"}
-					</button>
-					<button
-						type="button"
-						className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+					</Button>
+					<Button
+						variant="overlay"
+						size="sm"
 						onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
 					>
 						{sidebarVisible ? "Hide sidebar" : "Show sidebar"}
-					</button>
-					<button
-						type="button"
-						className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+					</Button>
+					<Button
+						variant="overlay"
+						size="sm"
 						onClick={() => setPlanesVisible((current) => !current)}
 					>
 						{planesVisible ? "Hide planes" : "Show planes"}
-					</button>
+					</Button>
 				</div>
 			</div>
 			{error ? (
