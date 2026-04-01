@@ -6,6 +6,10 @@ interface VolumeViewport3DProps {
   volume: PreparedVolumeFor3D | null;
   cursor?: VolumeCursor | null;
   className?: string;
+  axisViewsVisible?: boolean;
+  onAxisViewsVisibleChange?: (visible: boolean) => void;
+  sidebarVisible?: boolean;
+  onSidebarVisibleChange?: (visible: boolean) => void;
   onDownsampledChange?: (downsampled: boolean) => void;
 }
 
@@ -13,6 +17,10 @@ export function VolumeViewport3D({
   volume,
   cursor = null,
   className,
+  axisViewsVisible = true,
+  onAxisViewsVisibleChange,
+  sidebarVisible = true,
+  onSidebarVisibleChange,
   onDownsampledChange,
 }: VolumeViewport3DProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -119,6 +127,20 @@ export function VolumeViewport3D({
       />
       <div className="absolute inset-0 z-20 pointer-events-none">
         <div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+            onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
+          >
+            {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
+          </button>
+          <button
+            type="button"
+            className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+            onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
+          >
+            {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+          </button>
           <button
             type="button"
             className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
