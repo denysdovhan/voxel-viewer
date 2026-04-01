@@ -123,6 +123,8 @@ export default function App() {
   const [windowLevel, setWindowLevel] = useState<SliceWindowLevel>(DEFAULT_WINDOW_LEVEL);
   const [downsampled3D, setDownsampled3D] = useState(false);
   const [prepared3D, setPrepared3D] = useState<PreparedVolumeFor3D | null>(null);
+  const [axisViewsVisible, setAxisViewsVisible] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const directorySupported =
     typeof window !== 'undefined' &&
     typeof (window as DirectoryPickerWindow).showDirectoryPicker === 'function';
@@ -148,6 +150,8 @@ export default function App() {
     setWindowLevel(DEFAULT_WINDOW_LEVEL);
     setPrepared3D(null);
     setDownsampled3D(false);
+    setAxisViewsVisible(true);
+    setSidebarVisible(true);
     setProgress(IDLE_PROGRESS);
   });
 
@@ -344,9 +348,13 @@ export default function App() {
         )
       ) : (
         <div className="h-full overflow-hidden bg-slate-800">
-          <div className="grid h-full grid-cols-[minmax(0,1fr)_minmax(288px,22vw)] gap-px">
+          <div
+            className={`grid h-full gap-px ${sidebarVisible ? 'grid-cols-[minmax(0,1fr)_minmax(288px,22vw)]' : 'grid-cols-1'}`}
+          >
             <section className="min-h-0 min-w-0">
-              <div className="grid h-full min-h-0 min-w-0 grid-rows-[1.22fr_0.95fr] gap-px bg-slate-800">
+              <div
+                className={`grid h-full min-h-0 min-w-0 gap-px bg-slate-800 ${axisViewsVisible ? 'grid-rows-[1.22fr_0.95fr]' : 'grid-rows-1'}`}
+              >
                 <div className="grid min-h-0 min-w-0 grid-cols-1 gap-px bg-slate-800">
                   <ViewportFrame
                     title="3D"
@@ -362,173 +370,181 @@ export default function App() {
                     <VolumeViewport3D
                       volume={prepared3D}
                       cursor={cursor}
+                      axisViewsVisible={axisViewsVisible}
+                      onAxisViewsVisibleChange={setAxisViewsVisible}
+                      sidebarVisible={sidebarVisible}
+                      onSidebarVisibleChange={setSidebarVisible}
                       onDownsampledChange={setDownsampled3D}
                     />
                   </ViewportFrame>
                 </div>
 
-                <div className="grid min-h-0 min-w-0 grid-cols-3 gap-px bg-slate-800">
-                  <ViewportFrame
-                    title="Coronal"
-                    subtitle="Frontal · superior at top"
-                    status={cursor ? `Y ${cursor.y + 1}/${Math.max(1, dimensions[1])}` : 'No volume'}
-                  >
-                    <SliceCanvas
-                      image={slices.coronal}
-                      crosshairPoint={cursor ? { x: cursor.x, y: dimensions[2] - 1 - cursor.z } : undefined}
-                      crosshairSpace={volume ? [dimensions[0], dimensions[2]] : undefined}
-                      crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.axial }}
-                      label="XZ"
-                      fit="cover"
-                      onSelect={updateCursor('coronal')}
-                      stage="viewer"
-                    />
-                  </ViewportFrame>
+                {axisViewsVisible ? (
+                  <div className="grid min-h-0 min-w-0 grid-cols-3 gap-px bg-slate-800">
+                    <ViewportFrame
+                      title="Coronal"
+                      subtitle="Frontal · superior at top"
+                      status={cursor ? `Y ${cursor.y + 1}/${Math.max(1, dimensions[1])}` : 'No volume'}
+                    >
+                      <SliceCanvas
+                        image={slices.coronal}
+                        crosshairPoint={cursor ? { x: cursor.x, y: dimensions[2] - 1 - cursor.z } : undefined}
+                        crosshairSpace={volume ? [dimensions[0], dimensions[2]] : undefined}
+                        crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.axial }}
+                        label="XZ"
+                        fit="cover"
+                        onSelect={updateCursor('coronal')}
+                        stage="viewer"
+                      />
+                    </ViewportFrame>
 
-                  <ViewportFrame
-                    title="Sagittal"
-                    subtitle="Lateral · superior at top"
-                    status={cursor ? `X ${cursor.x + 1}/${Math.max(1, dimensions[0])}` : 'No volume'}
-                  >
-                    <SliceCanvas
-                      image={slices.sagittal}
-                      crosshairPoint={cursor ? { x: cursor.y, y: dimensions[2] - 1 - cursor.z } : undefined}
-                      crosshairSpace={volume ? [dimensions[1], dimensions[2]] : undefined}
-                      crosshairColors={{ vertical: PLANE_COLORS.coronal, horizontal: PLANE_COLORS.axial }}
-                      label="YZ"
-                      fit="cover"
-                      onSelect={updateCursor('sagittal')}
-                      stage="viewer"
-                    />
-                  </ViewportFrame>
+                    <ViewportFrame
+                      title="Sagittal"
+                      subtitle="Lateral · superior at top"
+                      status={cursor ? `X ${cursor.x + 1}/${Math.max(1, dimensions[0])}` : 'No volume'}
+                    >
+                      <SliceCanvas
+                        image={slices.sagittal}
+                        crosshairPoint={cursor ? { x: cursor.y, y: dimensions[2] - 1 - cursor.z } : undefined}
+                        crosshairSpace={volume ? [dimensions[1], dimensions[2]] : undefined}
+                        crosshairColors={{ vertical: PLANE_COLORS.coronal, horizontal: PLANE_COLORS.axial }}
+                        label="YZ"
+                        fit="cover"
+                        onSelect={updateCursor('sagittal')}
+                        stage="viewer"
+                      />
+                    </ViewportFrame>
 
-                  <ViewportFrame
-                    title="Axial"
-                    subtitle="Occlusal"
-                    status={cursor ? `Z ${cursor.z + 1}/${Math.max(1, dimensions[2])}` : 'No volume'}
-                  >
-                    <SliceCanvas
-                      image={slices.axial}
-                      crosshairPoint={cursor ? { x: cursor.x, y: cursor.y } : undefined}
-                      crosshairSpace={volume ? [dimensions[0], dimensions[1]] : undefined}
-                      crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.coronal }}
-                      label="XY"
-                      fit="cover"
-                      onSelect={updateCursor('axial')}
-                      stage="viewer"
-                    />
-                  </ViewportFrame>
-                </div>
+                    <ViewportFrame
+                      title="Axial"
+                      subtitle="Occlusal"
+                      status={cursor ? `Z ${cursor.z + 1}/${Math.max(1, dimensions[2])}` : 'No volume'}
+                    >
+                      <SliceCanvas
+                        image={slices.axial}
+                        crosshairPoint={cursor ? { x: cursor.x, y: cursor.y } : undefined}
+                        crosshairSpace={volume ? [dimensions[0], dimensions[1]] : undefined}
+                        crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.coronal }}
+                        label="XY"
+                        fit="cover"
+                        onSelect={updateCursor('axial')}
+                        stage="viewer"
+                      />
+                    </ViewportFrame>
+                  </div>
+                ) : null}
               </div>
             </section>
 
-            <aside className="grid min-w-0 min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] overflow-hidden">
-              <section className="min-w-0 rounded border border-slate-800 bg-slate-950/80 p-2.5">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Study</div>
-                <div className="mt-1 truncate text-sm font-semibold text-slate-100" title={volume?.meta.scanId}>
-                  {volume?.meta.scanId}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {dimensions.join(' x ')} voxels
-                </div>
-                <div className="mt-1 text-xs text-slate-500">{formatSpacing(spacing)} mm</div>
-                <div className="mt-1 truncate text-xs text-slate-600" title={sourceLabel}>
-                  {sourceLabel}
-                </div>
-              </section>
-
-              <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Display</div>
-                <div className="mt-2.5">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>Window</span>
-                    <span className="font-medium text-slate-200">{windowLevelDraft.window}</span>
+            {sidebarVisible ? (
+              <aside className="grid min-w-0 min-h-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] overflow-hidden">
+                <section className="min-w-0 rounded border border-slate-800 bg-slate-950/80 p-2.5">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Study</div>
+                  <div className="mt-1 truncate text-sm font-semibold text-slate-100" title={volume?.meta.scanId}>
+                    {volume?.meta.scanId}
                   </div>
-                  <input
-                    className="mt-1 w-full accent-sky-400"
-                    type="range"
-                    min={WINDOW_MIN}
-                    max={WINDOW_MAX}
-                    value={windowLevelDraft.window}
-                    onChange={(event) => handleWindowChange(Number(event.target.value))}
-                    onPointerUp={(event) => handleWindowCommit(Number(event.currentTarget.value))}
-                    onPointerCancel={(event) => handleWindowCommit(Number(event.currentTarget.value))}
-                    onKeyUp={(event) => handleWindowCommit(Number((event.currentTarget as HTMLInputElement).value))}
-                    onBlur={(event) => handleWindowCommit(Number(event.currentTarget.value))}
-                  />
-                  <p className="mt-1 text-[11px] leading-4 text-slate-500">
-                    Contrast span. Smaller window = more contrast.
-                  </p>
-                </div>
-
-                <div className="mt-2.5">
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>Level</span>
-                    <span className="font-medium text-slate-200">{windowLevelDraft.level}</span>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {dimensions.join(' x ')} voxels
                   </div>
-                  <input
-                    className="mt-1 w-full accent-sky-400"
-                    type="range"
-                    min={LEVEL_MIN}
-                    max={LEVEL_MAX}
-                    value={windowLevelDraft.level}
-                    onChange={(event) => handleLevelChange(Number(event.target.value))}
-                    onPointerUp={(event) => handleLevelCommit(Number(event.currentTarget.value))}
-                    onPointerCancel={(event) => handleLevelCommit(Number(event.currentTarget.value))}
-                    onKeyUp={(event) => handleLevelCommit(Number((event.currentTarget as HTMLInputElement).value))}
-                    onBlur={(event) => handleLevelCommit(Number(event.currentTarget.value))}
-                  />
-                  <p className="mt-1 text-[11px] leading-4 text-slate-500">
-                    Brightness bias. Higher level favors denser tissue.
-                  </p>
-                </div>
-              </section>
+                  <div className="mt-1 text-xs text-slate-500">{formatSpacing(spacing)} mm</div>
+                  <div className="mt-1 truncate text-xs text-slate-600" title={sourceLabel}>
+                    {sourceLabel}
+                  </div>
+                </section>
 
-              <div className="min-h-0 min-w-0">
-                <ImportStatus progress={progress} issue={issue} stage="viewer" />
-              </div>
+                <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Display</div>
+                  <div className="mt-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Window</span>
+                      <span className="font-medium text-slate-200">{windowLevelDraft.window}</span>
+                    </div>
+                    <input
+                      className="mt-1 w-full accent-sky-400"
+                      type="range"
+                      min={WINDOW_MIN}
+                      max={WINDOW_MAX}
+                      value={windowLevelDraft.window}
+                      onChange={(event) => handleWindowChange(Number(event.target.value))}
+                      onPointerUp={(event) => handleWindowCommit(Number(event.currentTarget.value))}
+                      onPointerCancel={(event) => handleWindowCommit(Number(event.currentTarget.value))}
+                      onKeyUp={(event) => handleWindowCommit(Number((event.currentTarget as HTMLInputElement).value))}
+                      onBlur={(event) => handleWindowCommit(Number(event.currentTarget.value))}
+                    />
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                      Contrast span. Smaller window = more contrast.
+                    </p>
+                  </div>
 
-              <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Navigation</div>
-                <div className="mt-2 text-xs text-slate-400">
-                  Cursor {cursor ? `${cursor.x + 1}, ${cursor.y + 1}, ${cursor.z + 1}` : 'n/a'}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Coronal and sagittal views are flipped so superior anatomy stays at the top.
-                </div>
-                <div className="mt-2 text-xs text-slate-400">
-                  3D using full volume.
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {downsampled3D ? 'Downsampled from full volume to fit GPU texture limits.' : 'Native full-volume resolution.'}
-                </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  Colored planes in 3D match the current coronal, sagittal, and axial slices.
-                </div>
-              </section>
+                  <div className="mt-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-400">
+                      <span>Level</span>
+                      <span className="font-medium text-slate-200">{windowLevelDraft.level}</span>
+                    </div>
+                    <input
+                      className="mt-1 w-full accent-sky-400"
+                      type="range"
+                      min={LEVEL_MIN}
+                      max={LEVEL_MAX}
+                      value={windowLevelDraft.level}
+                      onChange={(event) => handleLevelChange(Number(event.target.value))}
+                      onPointerUp={(event) => handleLevelCommit(Number(event.currentTarget.value))}
+                      onPointerCancel={(event) => handleLevelCommit(Number(event.currentTarget.value))}
+                      onKeyUp={(event) => handleLevelCommit(Number((event.currentTarget as HTMLInputElement).value))}
+                      onBlur={(event) => handleLevelCommit(Number(event.currentTarget.value))}
+                    />
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                      Brightness bias. Higher level favors denser tissue.
+                    </p>
+                  </div>
+                </section>
 
-              <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
-                <div className="grid grid-cols-1 gap-2">
-                  <button
-                    type="button"
-                    className={`${PRIMARY_BUTTON} w-full justify-center`}
-                    onClick={() => void openDirectory()}
-                  >
-                    Open folder
-                  </button>
-                  <button
-                    type="button"
-                    className={`${GHOST_BUTTON} w-full justify-center`}
-                    onClick={resetViewer}
-                  >
-                    Back to import
-                  </button>
+                <div className="min-h-0 min-w-0">
+                  <ImportStatus progress={progress} issue={issue} stage="viewer" />
                 </div>
-                <div className="mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[11px] leading-4 text-amber-200">
-                  Reference only. Not for diagnosis, treatment planning, measurements, or implant workflows.
-                </div>
-              </section>
-            </aside>
+
+                <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Navigation</div>
+                  <div className="mt-2 text-xs text-slate-400">
+                    Cursor {cursor ? `${cursor.x + 1}, ${cursor.y + 1}, ${cursor.z + 1}` : 'n/a'}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Coronal and sagittal views are flipped so superior anatomy stays at the top.
+                  </div>
+                  <div className="mt-2 text-xs text-slate-400">
+                    3D using full volume.
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {downsampled3D ? 'Downsampled from full volume to fit GPU texture limits.' : 'Native full-volume resolution.'}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    Colored planes in 3D match the current coronal, sagittal, and axial slices.
+                  </div>
+                </section>
+
+                <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      type="button"
+                      className={`${PRIMARY_BUTTON} w-full justify-center`}
+                      onClick={() => void openDirectory()}
+                    >
+                      Open folder
+                    </button>
+                    <button
+                      type="button"
+                      className={`${GHOST_BUTTON} w-full justify-center`}
+                      onClick={resetViewer}
+                    >
+                      Back to import
+                    </button>
+                  </div>
+                  <div className="mt-3 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-2 text-[11px] leading-4 text-amber-200">
+                    Reference only. Not for diagnosis, treatment planning, measurements, or implant workflows.
+                  </div>
+                </section>
+              </aside>
+            ) : null}
           </div>
         </div>
       )}
