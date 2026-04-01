@@ -1,48 +1,42 @@
+import type { ImportProgress, ScanFolderSource } from '../../types';
+import { ImportStage } from '../../types';
+import { type ImportFailure, parseGalileosFolder } from './parse-galileos';
 import type {
-  ImportProgress,
-  LoadedVolume,
-  ParsedVolumeMeta,
-  PreparedVolumeFor3D,
-  ScanFolderSource,
-} from '../../types';
-import { parseGalileosFolder, type ImportFailure } from './parse-galileos';
-
-type WorkerRequest = {
-  type: 'assemble-volume';
-  files: Array<{ name: string; path: string; buffer: ArrayBuffer }>;
-  meta: ParsedVolumeMeta;
-};
-
-type WorkerEvent =
-  | { type: 'progress'; progress: ImportProgress }
-  | {
-      type: 'result';
-      volume: LoadedVolume;
-      meta: ParsedVolumeMeta;
-      prepared3D: PreparedVolumeFor3D;
-    }
-  | { type: 'error'; error: ImportFailure };
-
-export interface LoadedImport {
-  volume: LoadedVolume;
-  meta: ParsedVolumeMeta;
-  prepared3D: PreparedVolumeFor3D;
-}
+  LoadedImport,
+  VolumeWorkerEvent,
+  VolumeWorkerRequest,
+} from './types';
+import { VolumeWorkerRequestType } from './types';
 
 export async function loadVolumeFromFolder(
   source: ScanFolderSource,
   onProgress?: (progress: ImportProgress) => void,
 ): Promise<LoadedImport> {
-  onProgress?.({ stage: 'scanning', detail: 'Scanning selected folder', completed: 0, total: 1 });
+  onProgress?.({
+    stage: ImportStage.Scanning,
+    detail: 'Scanning selected folder',
+    completed: 0,
+    total: 1,
+  });
   const parsed = await parseGalileosFolder(source);
-  onProgress?.({ stage: 'parsing-meta', detail: 'Parsed folder metadata', completed: 1, total: 3 });
+  onProgress?.({
+    stage: ImportStage.ParsingMeta,
+    detail: 'Parsed folder metadata',
+    completed: 1,
+    total: 3,
+  });
 
-  const worker = new Worker(new URL('../../workers/volume.worker.ts', import.meta.url), { type: 'module' });
-  const payload: WorkerRequest = {
-    type: 'assemble-volume',
+  const worker = new Worker(
+    new URL('../../workers/volume.worker.ts', import.meta.url),
+    { type: 'module' },
+  );
+  const payload: VolumeWorkerRequest = {
+    type: VolumeWorkerRequestType.AssembleVolume,
     files: await Promise.all(
       source.entries
-        .filter((entry) => parsed.meta.sliceFiles.includes(entry.relativePath || entry.name))
+        .filter((entry) =>
+          parsed.meta.sliceFiles.includes(entry.relativePath || entry.name),
+        )
         .map(async (entry) => ({
           name: entry.name,
           path: entry.relativePath || entry.name,
@@ -53,7 +47,7 @@ export async function loadVolumeFromFolder(
   };
 
   return await new Promise<LoadedImport>((resolve, reject) => {
-    worker.onmessage = (event: MessageEvent<WorkerEvent>) => {
+    worker.onmessage = (event: MessageEvent<VolumeWorkerEvent>) => {
       const data = event.data;
       if (data.type === 'progress') {
         onProgress?.(data.progress);
@@ -61,7 +55,12 @@ export async function loadVolumeFromFolder(
       }
       if (data.type === 'result') {
         worker.terminate();
-        onProgress?.({ stage: 'ready', detail: 'Viewer ready', completed: 1, total: 1 });
+        onProgress?.({
+          stage: ImportStage.Ready,
+          detail: 'Viewer ready',
+          completed: 1,
+          total: 1,
+        });
         resolve({
           volume: data.volume,
           meta: data.meta,
@@ -76,8 +75,16 @@ export async function loadVolumeFromFolder(
       worker.terminate();
       reject(makeError('E_WORKER', event.message || 'worker failed'));
     };
-    worker.postMessage(payload, payload.files.map((file) => file.buffer));
-    onProgress?.({ stage: 'inflating-slices', detail: 'Inflating gzip slices', completed: 0, total: parsed.meta.sliceFiles.length + 1 });
+    worker.postMessage(
+      payload,
+      payload.files.map((file) => file.buffer),
+    );
+    onProgress?.({
+      stage: ImportStage.InflatingSlices,
+      detail: 'Inflating gzip slices',
+      completed: 0,
+      total: parsed.meta.sliceFiles.length + 1,
+    });
   });
 }
 

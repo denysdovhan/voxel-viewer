@@ -10,6 +10,8 @@ import {
   ViewportFrame,
   VolumeViewport3D,
 } from './components';
+import { ImportStatusStage } from './components/ImportStatus';
+import { SliceCanvasFit } from './components/SliceCanvas';
 import { PLANE_COLORS } from './constants';
 import { loadVolumeFromFolder } from './lib/import/load-volume';
 import { fromDirectoryHandle } from './lib/import/scan-folder';
@@ -29,10 +31,11 @@ import type {
   SliceWindowLevel,
   VolumeCursor,
 } from './types';
+import { ImportStage, VolumeAxis } from './types';
 import { cn } from './utils/cn';
 
 const IDLE_PROGRESS: ImportProgress = {
-  stage: 'idle',
+  stage: ImportStage.Idle,
   detail: 'Select a GALILEOS folder to begin',
   completed: 0,
   total: 1,
@@ -68,7 +71,9 @@ function isAbortError(error: unknown): boolean {
 }
 
 function isBusy(progress: ImportProgress): boolean {
-  return !['idle', 'ready', 'error'].includes(progress.stage);
+  return ![ImportStage.Idle, ImportStage.Ready, ImportStage.Error].includes(
+    progress.stage,
+  );
 }
 
 function makeImportIssue(error: unknown): ImportIssue {
@@ -131,7 +136,7 @@ export default function App() {
     typeof window !== 'undefined' &&
     typeof (window as DirectoryPickerWindow).showDirectoryPicker === 'function';
   const busy = isBusy(progress);
-  const stage = volume ? 'viewer' : 'import';
+  const stage = volume ? ImportStatusStage.Viewer : ImportStatusStage.Import;
   const debouncedCommitWindowLevel = useMemo(
     () =>
       debounce((next: SliceWindowLevel) => {
@@ -165,7 +170,7 @@ export default function App() {
     resetViewer();
     setSourceLabel(source.label);
     setProgress({
-      stage: 'scanning',
+      stage: ImportStage.Scanning,
       detail: `Scanning ${source.label}`,
       completed: 0,
       total: 1,
@@ -181,7 +186,7 @@ export default function App() {
       setWindowLevel(DEFAULT_WINDOW_LEVEL);
       setMprZoom(DEFAULT_MPR_ZOOM);
       setProgress({
-        stage: 'ready',
+        stage: ImportStage.Ready,
         detail: `Loaded ${loaded.meta.scanId}`,
         completed: loaded.meta.sliceCount,
         total: loaded.meta.sliceCount,
@@ -191,7 +196,7 @@ export default function App() {
 
       setIssue(makeImportIssue(error));
       setProgress({
-        stage: 'error',
+        stage: ImportStage.Error,
         detail: 'Import failed',
         completed: 0,
         total: 1,
@@ -228,7 +233,7 @@ export default function App() {
   };
 
   const updateCursor =
-    (axis: 'axial' | 'coronal' | 'sagittal') =>
+    (axis: VolumeAxis) =>
     ({ xRatio, yRatio }: { xRatio: number; yRatio: number }) => {
       if (!volume) return;
 
@@ -236,7 +241,7 @@ export default function App() {
         if (!current) return current;
 
         const [width, height, depth] = volume.meta.dimensions;
-        if (axis === 'axial') {
+        if (axis === VolumeAxis.Axial) {
           const next = {
             x: clamp(Math.round(xRatio * (width - 1)), 0, width - 1),
             y: clamp(Math.round(yRatio * (height - 1)), 0, height - 1),
@@ -245,7 +250,7 @@ export default function App() {
           return next.x === current.x && next.y === current.y ? current : next;
         }
 
-        if (axis === 'coronal') {
+        if (axis === VolumeAxis.Coronal) {
           const next = {
             x: clamp(Math.round(xRatio * (width - 1)), 0, width - 1),
             y: current.y,
@@ -304,7 +309,7 @@ export default function App() {
 
   return (
     <main className="h-screen overflow-hidden bg-slate-950 text-slate-100">
-      {stage === 'import' ? (
+      {stage === ImportStatusStage.Import ? (
         busy ? (
           <div className="mx-auto flex min-h-screen max-w-lg items-center justify-center px-4 py-8">
             <div className="w-full space-y-4 rounded border border-slate-800 bg-slate-950/90 p-5 shadow-2xl">
@@ -319,7 +324,11 @@ export default function App() {
                   </div>
                 </div>
               </div>
-              <ImportStatus progress={progress} issue={issue} stage="import" />
+              <ImportStatus
+                progress={progress}
+                issue={issue}
+                stage={ImportStatusStage.Import}
+              />
               <Notice>
                 Reference only. Not for diagnosis, treatment planning,
                 measurements, or implant workflows.
@@ -355,7 +364,11 @@ export default function App() {
                 unsupportedHint="Use Chromium desktop for direct folder picking."
               />
 
-              <ImportStatus progress={progress} issue={issue} stage="import" />
+              <ImportStatus
+                progress={progress}
+                issue={issue}
+                stage={ImportStatusStage.Import}
+              />
 
               <Notice>
                 Reference only. Not for diagnosis, treatment planning,
@@ -433,10 +446,10 @@ export default function App() {
                           horizontal: PLANE_COLORS.axial,
                         }}
                         label="XZ"
-                        fit="cover"
+                        fit={SliceCanvasFit.Cover}
                         zoom={mprZoom}
                         onZoomChange={setMprZoom}
-                        onSelect={updateCursor('coronal')}
+                        onSelect={updateCursor(VolumeAxis.Coronal)}
                       />
                     </ViewportFrame>
 
@@ -464,10 +477,10 @@ export default function App() {
                           horizontal: PLANE_COLORS.axial,
                         }}
                         label="YZ"
-                        fit="cover"
+                        fit={SliceCanvasFit.Cover}
                         zoom={mprZoom}
                         onZoomChange={setMprZoom}
-                        onSelect={updateCursor('sagittal')}
+                        onSelect={updateCursor(VolumeAxis.Sagittal)}
                       />
                     </ViewportFrame>
 
@@ -493,10 +506,10 @@ export default function App() {
                           horizontal: PLANE_COLORS.coronal,
                         }}
                         label="XY"
-                        fit="cover"
+                        fit={SliceCanvasFit.Cover}
                         zoom={mprZoom}
                         onZoomChange={setMprZoom}
-                        onSelect={updateCursor('axial')}
+                        onSelect={updateCursor(VolumeAxis.Axial)}
                       />
                     </ViewportFrame>
                   </div>
@@ -563,7 +576,7 @@ export default function App() {
                   <ImportStatus
                     progress={progress}
                     issue={issue}
-                    stage="viewer"
+                    stage={ImportStatusStage.Viewer}
                   />
                 </div>
 

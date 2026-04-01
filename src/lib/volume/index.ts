@@ -5,17 +5,12 @@ import type {
   SliceWindowLevel,
   VolumeCursor,
 } from '../../types';
+import { VolumeAxis } from '../../types';
 
 const DEFAULT_WINDOW = 3500;
 const DEFAULT_LEVEL = 1800;
 const MAX_3D_TEXTURE_EDGE = 512;
 const MAX_SLICE_CACHE_ENTRIES = 12;
-
-enum Axis {
-  Axial = 'axial',
-  Coronal = 'coronal',
-  Sagittal = 'sagittal',
-}
 
 interface VolumeCacheEntry {
   axial: Map<string, SliceImage>;
@@ -29,29 +24,48 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-export function getVolumeDimensions(volume: LoadedVolume): readonly [number, number, number] {
+export function getVolumeDimensions(
+  volume: LoadedVolume,
+): readonly [number, number, number] {
   return volume.meta.dimensions;
 }
 
-export function voxelIndex(volume: LoadedVolume, x: number, y: number, z: number): number {
+export function voxelIndex(
+  volume: LoadedVolume,
+  x: number,
+  y: number,
+  z: number,
+): number {
   const [width, height] = volume.meta.dimensions;
   return z * width * height + y * width + x;
 }
 
-export function getVoxelValue(volume: LoadedVolume, x: number, y: number, z: number): number {
+export function getVoxelValue(
+  volume: LoadedVolume,
+  x: number,
+  y: number,
+  z: number,
+): number {
   const [width, height, depth] = volume.meta.dimensions;
-  if (x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= depth) return 0;
+  if (x < 0 || y < 0 || z < 0 || x >= width || y >= height || z >= depth)
+    return 0;
   return volume.voxels[voxelIndex(volume, x, y, z)] ?? 0;
 }
 
-export function resolveWindowLevel(windowLevel?: Partial<SliceWindowLevel>): SliceWindowLevel {
+export function resolveWindowLevel(
+  windowLevel?: Partial<SliceWindowLevel>,
+): SliceWindowLevel {
   return {
     window: Math.max(1, windowLevel?.window ?? DEFAULT_WINDOW),
     level: windowLevel?.level ?? DEFAULT_LEVEL,
   };
 }
 
-export function mapIntensityToGray(value: number, window: number, level: number): number {
+export function mapIntensityToGray(
+  value: number,
+  window: number,
+  level: number,
+): number {
   const low = level - window / 2;
   const normalized = (value - low) / window;
   return Math.round(clamp(normalized, 0, 1) * 255);
@@ -79,15 +93,25 @@ function getVolumeCache(volume: LoadedVolume): VolumeCacheEntry {
   return cache;
 }
 
-function cacheForAxis(cache: VolumeCacheEntry, axis: Axis): Map<string, SliceImage> {
+function cacheForAxis(
+  cache: VolumeCacheEntry,
+  axis: VolumeAxis,
+): Map<string, SliceImage> {
   return cache[axis];
 }
 
-function sliceCacheKey(sliceIndex: number, window: number, level: number): string {
+function sliceCacheKey(
+  sliceIndex: number,
+  window: number,
+  level: number,
+): string {
   return `${sliceIndex}|${window}|${level}`;
 }
 
-function toRgbaBuffer(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8ClampedArray {
+function toRgbaBuffer(
+  gray: ArrayLike<number>,
+  out?: Uint8ClampedArray,
+): Uint8ClampedArray {
   const rgba = out ?? new Uint8ClampedArray(gray.length * 4);
   for (let i = 0, j = 0; i < gray.length; i += 1, j += 4) {
     const value = gray[i] ?? 0;
@@ -99,72 +123,100 @@ function toRgbaBuffer(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8Cl
   return rgba;
 }
 
-function extractAxisSliceIndex(axis: Axis, cursor: VolumeCursor): number {
+function extractAxisSliceIndex(axis: VolumeAxis, cursor: VolumeCursor): number {
   switch (axis) {
-    case Axis.Axial:
+    case VolumeAxis.Axial:
       return cursor.z;
-    case Axis.Coronal:
+    case VolumeAxis.Coronal:
       return cursor.y;
-    case Axis.Sagittal:
+    case VolumeAxis.Sagittal:
       return cursor.x;
   }
 }
 
 function axisSliceLimit(
-  axis: Axis,
+  axis: VolumeAxis,
   width: number,
   height: number,
   depth: number,
 ): number {
   switch (axis) {
-    case Axis.Axial:
+    case VolumeAxis.Axial:
       return depth - 1;
-    case Axis.Coronal:
+    case VolumeAxis.Coronal:
       return height - 1;
-    case Axis.Sagittal:
+    case VolumeAxis.Sagittal:
       return width - 1;
   }
 }
 
 function axisImageShape(
-  axis: Axis,
+  axis: VolumeAxis,
   width: number,
   height: number,
   depth: number,
 ): Pick<SliceImage, 'width' | 'height'> {
   switch (axis) {
-    case Axis.Axial:
+    case VolumeAxis.Axial:
       return { width, height };
-    case Axis.Coronal:
+    case VolumeAxis.Coronal:
       return { width, height: depth };
-    case Axis.Sagittal:
+    case VolumeAxis.Sagittal:
       return { width: height, height: depth };
   }
 }
 
 function sampleAxisGray(
   volume: LoadedVolume,
-  axis: Axis,
+  axis: VolumeAxis,
   sliceIndex: number,
   window: number,
   level: number,
 ): Uint8ClampedArray {
   const [width, height, depth] = volume.meta.dimensions;
-  const slice = clamp(Math.round(sliceIndex), 0, axisSliceLimit(axis, width, height, depth));
+  const slice = clamp(
+    Math.round(sliceIndex),
+    0,
+    axisSliceLimit(axis, width, height, depth),
+  );
 
   switch (axis) {
-    case Axis.Axial:
-      return sampleAxialGray(volume, slice, window, level, width, height, depth);
-    case Axis.Coronal:
-      return sampleCoronalGray(volume, slice, window, level, width, height, depth);
-    case Axis.Sagittal:
-      return sampleSagittalGray(volume, slice, window, level, width, height, depth);
+    case VolumeAxis.Axial:
+      return sampleAxialGray(
+        volume,
+        slice,
+        window,
+        level,
+        width,
+        height,
+        depth,
+      );
+    case VolumeAxis.Coronal:
+      return sampleCoronalGray(
+        volume,
+        slice,
+        window,
+        level,
+        width,
+        height,
+        depth,
+      );
+    case VolumeAxis.Sagittal:
+      return sampleSagittalGray(
+        volume,
+        slice,
+        window,
+        level,
+        width,
+        height,
+        depth,
+      );
   }
 }
 
 function extractAxisImageData(
   volume: LoadedVolume,
-  axis: Axis,
+  axis: VolumeAxis,
   sliceIndex: number,
   window: number,
   level: number,
@@ -204,7 +256,11 @@ function sampleAxialGray(
   let offset = 0;
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      out[offset] = mapIntensityToGray(getVoxelValue(volume, x, y, z), window, level);
+      out[offset] = mapIntensityToGray(
+        getVoxelValue(volume, x, y, z),
+        window,
+        level,
+      );
       offset += 1;
     }
   }
@@ -225,7 +281,11 @@ function sampleCoronalGray(
   let offset = 0;
   for (let z = depth - 1; z >= 0; z -= 1) {
     for (let x = 0; x < width; x += 1) {
-      out[offset] = mapIntensityToGray(getVoxelValue(volume, x, y, z), window, level);
+      out[offset] = mapIntensityToGray(
+        getVoxelValue(volume, x, y, z),
+        window,
+        level,
+      );
       offset += 1;
     }
   }
@@ -246,7 +306,11 @@ function sampleSagittalGray(
   let offset = 0;
   for (let z = depth - 1; z >= 0; z -= 1) {
     for (let y = 0; y < height; y += 1) {
-      out[offset] = mapIntensityToGray(getVoxelValue(volume, x, y, z), window, level);
+      out[offset] = mapIntensityToGray(
+        getVoxelValue(volume, x, y, z),
+        window,
+        level,
+      );
       offset += 1;
     }
   }
@@ -259,7 +323,10 @@ export function extractAxialImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  return extractAxisImage(volume, Axis.Axial, cursor.z, { window, level });
+  return extractAxisImage(volume, VolumeAxis.Axial, cursor.z, {
+    window,
+    level,
+  });
 }
 
 export function extractCoronalImage(
@@ -268,7 +335,10 @@ export function extractCoronalImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  return extractAxisImage(volume, Axis.Coronal, cursor.y, { window, level });
+  return extractAxisImage(volume, VolumeAxis.Coronal, cursor.y, {
+    window,
+    level,
+  });
 }
 
 export function extractSagittalImage(
@@ -277,22 +347,31 @@ export function extractSagittalImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  return extractAxisImage(volume, Axis.Sagittal, cursor.x, { window, level });
+  return extractAxisImage(volume, VolumeAxis.Sagittal, cursor.x, {
+    window,
+    level,
+  });
 }
 
 export function extractSliceGrayImage(
   volume: LoadedVolume,
-  axis: Axis,
+  axis: VolumeAxis,
   cursor: VolumeCursor,
   windowLevel?: Partial<SliceWindowLevel>,
 ): Uint8ClampedArray {
   const { window, level } = resolveWindowLevel(windowLevel);
-  return sampleAxisGray(volume, axis, extractAxisSliceIndex(axis, cursor), window, level);
+  return sampleAxisGray(
+    volume,
+    axis,
+    extractAxisSliceIndex(axis, cursor),
+    window,
+    level,
+  );
 }
 
 function extractAxisImage(
   volume: LoadedVolume,
-  axis: Axis,
+  axis: VolumeAxis,
   sliceIndex: number,
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
@@ -300,7 +379,10 @@ function extractAxisImage(
   return extractAxisImageData(volume, axis, sliceIndex, window, level);
 }
 
-export function grayToRgba(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8ClampedArray {
+export function grayToRgba(
+  gray: ArrayLike<number>,
+  out?: Uint8ClampedArray,
+): Uint8ClampedArray {
   return toRgbaBuffer(gray, out);
 }
 
@@ -343,7 +425,8 @@ export function prepareVolumeFor3D(volume: LoadedVolume): PreparedVolumeFor3D {
       for (let x = 0; x < outWidth; x += 1) {
         const sourceX = sampleIndex(x, outWidth, width);
         out[z * outWidth * outHeight + y * outWidth + x] =
-          full.voxels[sourceZ * width * height + sourceY * width + sourceX] ?? 0;
+          full.voxels[sourceZ * width * height + sourceY * width + sourceX] ??
+          0;
       }
     }
   }
@@ -352,7 +435,11 @@ export function prepareVolumeFor3D(volume: LoadedVolume): PreparedVolumeFor3D {
     dimensions: [outWidth, outHeight, outDepth],
     sourceDimensions: full.sourceDimensions,
     origin: full.origin,
-    spacing: [full.spacing[0] / scale, full.spacing[1] / scale, full.spacing[2] / scale],
+    spacing: [
+      full.spacing[0] / scale,
+      full.spacing[1] / scale,
+      full.spacing[2] / scale,
+    ],
     voxels: quantizePreviewVoxels(out, full.scalarRange),
     scalarRange: full.scalarRange,
     threshold,
@@ -384,8 +471,16 @@ function estimatePreviewThreshold(
     histogram[Math.min(histogram.length - 1, voxels[index] ?? 0)] += 1;
   }
 
-  const percentile95 = resolveHistogramPercentile(histogram, voxels.length, 0.95);
-  const percentile985 = resolveHistogramPercentile(histogram, voxels.length, 0.985);
+  const percentile95 = resolveHistogramPercentile(
+    histogram,
+    voxels.length,
+    0.95,
+  );
+  const percentile985 = resolveHistogramPercentile(
+    histogram,
+    voxels.length,
+    0.985,
+  );
   return clamp(
     Math.round(percentile95 * 0.42 + percentile985 * 0.14),
     Math.max(950, scalarRange[0]),
@@ -409,5 +504,8 @@ function resolveHistogramPercentile(
 
 function sampleIndex(index: number, outSize: number, inSize: number): number {
   if (outSize <= 1 || inSize <= 1) return 0;
-  return Math.min(inSize - 1, Math.round((index / (outSize - 1)) * (inSize - 1)));
+  return Math.min(
+    inSize - 1,
+    Math.round((index / (outSize - 1)) * (inSize - 1)),
+  );
 }

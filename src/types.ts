@@ -1,5 +1,10 @@
 export type FileMap = Map<string, File>;
 
+export enum ScanFolderSourceKind {
+  DirectoryHandle = 'directory-handle',
+  FileList = 'file-list',
+}
+
 export interface ScanFolderEntry {
   name: string;
   relativePath: string;
@@ -7,9 +12,20 @@ export interface ScanFolderEntry {
 }
 
 export interface ScanFolderSource {
-  kind: 'directory-handle' | 'file-list';
+  kind: ScanFolderSourceKind;
   label: string;
   entries: ScanFolderEntry[];
+}
+
+export enum ImportStage {
+  Idle = 'idle',
+  Scanning = 'scanning',
+  ParsingMeta = 'parsing-meta',
+  InflatingSlices = 'inflating-slices',
+  Assembling = 'assembling',
+  Preparing3D = 'preparing-3d',
+  Ready = 'ready',
+  Error = 'error',
 }
 
 export interface ParsedVolumeMeta {
@@ -36,18 +52,16 @@ export interface ImportIssue {
 }
 
 export interface ImportProgress {
-  stage:
-    | 'idle'
-    | 'scanning'
-    | 'parsing-meta'
-    | 'inflating-slices'
-    | 'assembling'
-    | 'preparing-3d'
-    | 'ready'
-    | 'error';
+  stage: ImportStage;
   detail: string;
   completed: number;
   total: number;
+}
+
+export enum VolumeAxis {
+  Axial = 'axial',
+  Coronal = 'coronal',
+  Sagittal = 'sagittal',
 }
 
 export interface VolumeCursor {

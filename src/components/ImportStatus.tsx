@@ -1,31 +1,36 @@
-import type { ImportIssue, ImportProgress } from '../types';
+import { type ImportIssue, type ImportProgress, ImportStage } from '../types';
 import { cn } from '../utils/cn';
+
+export enum ImportStatusStage {
+  Import = 'import',
+  Viewer = 'viewer',
+}
 
 interface ImportStatusProps {
   progress: ImportProgress;
   issue?: ImportIssue | null;
-  stage?: 'import' | 'viewer';
+  stage?: ImportStatusStage;
 }
 
 function resolveProgressPercent(progress: ImportProgress): number {
   const local = progress.total > 0 ? progress.completed / progress.total : 0;
 
   switch (progress.stage) {
-    case 'idle':
+    case ImportStage.Idle:
       return 0;
-    case 'scanning':
+    case ImportStage.Scanning:
       return 4 + local * 4;
-    case 'parsing-meta':
+    case ImportStage.ParsingMeta:
       return 8 + local * 10;
-    case 'assembling':
+    case ImportStage.Assembling:
       return 18 + local * 8;
-    case 'inflating-slices':
+    case ImportStage.InflatingSlices:
       return 26 + local * 54;
-    case 'preparing-3d':
+    case ImportStage.Preparing3D:
       return 80 + local * 20;
-    case 'ready':
+    case ImportStage.Ready:
       return 100;
-    case 'error':
+    case ImportStage.Error:
       return Math.max(8, Math.min(99, local * 100));
     default:
       return local * 100;
@@ -35,7 +40,7 @@ function resolveProgressPercent(progress: ImportProgress): number {
 export function ImportStatus({
   progress,
   issue,
-  stage = 'import',
+  stage = ImportStatusStage.Import,
 }: ImportStatusProps) {
   const pct = Math.round(resolveProgressPercent(progress));
 
@@ -43,7 +48,7 @@ export function ImportStatus({
     <div
       className={cn(
         'rounded border border-slate-800 bg-slate-950/70 p-3',
-        stage === 'viewer' ? 'text-xs' : '',
+        stage === ImportStatusStage.Viewer ? 'text-xs' : '',
       )}
     >
       <div className="flex items-center justify-between gap-3">
