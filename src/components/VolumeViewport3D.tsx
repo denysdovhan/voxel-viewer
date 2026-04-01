@@ -9,7 +9,6 @@ import { Button } from "./Button";
 interface VolumeViewport3DProps {
 	volume: PreparedVolumeFor3D | null;
 	cursor?: VolumeCursor | null;
-	className?: string;
 	axisViewsVisible?: boolean;
 	onAxisViewsVisibleChange?: (visible: boolean) => void;
 	sidebarVisible?: boolean;
@@ -20,7 +19,6 @@ interface VolumeViewport3DProps {
 export function VolumeViewport3D({
 	volume,
 	cursor = null,
-	className,
 	axisViewsVisible = true,
 	onAxisViewsVisibleChange,
 	sidebarVisible = true,
@@ -130,14 +128,7 @@ export function VolumeViewport3D({
 	}, [volume]);
 
 	return (
-		<div
-			className={[
-				"relative h-full min-h-0 overflow-hidden bg-black",
-				className ?? "",
-			]
-				.join(" ")
-				.trim()}
-		>
+		<div className="relative h-full min-h-0 overflow-hidden bg-black">
 			<div
 				ref={hostRef}
 				className="absolute inset-0 h-full min-h-0 overflow-hidden"

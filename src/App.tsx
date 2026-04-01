@@ -345,7 +345,6 @@ export default function App() {
 							<FolderPicker
 								directorySupported={directorySupported}
 								onPickDirectory={() => void openDirectory()}
-								onReset={resetViewer}
 								busy={busy}
 								detail={
 									sourceLabel
@@ -353,7 +352,6 @@ export default function App() {
 										: "Chromium desktop over HTTPS or localhost recommended"
 								}
 								unsupportedHint="Use Chromium desktop for direct folder picking."
-								stage="import"
 							/>
 
 							<ImportStatus progress={progress} issue={issue} stage="import" />
@@ -428,7 +426,6 @@ export default function App() {
 												zoom={mprZoom}
 												onZoomChange={setMprZoom}
 												onSelect={updateCursor("coronal")}
-												stage="viewer"
 											/>
 										</ViewportFrame>
 
@@ -460,7 +457,6 @@ export default function App() {
 												zoom={mprZoom}
 												onZoomChange={setMprZoom}
 												onSelect={updateCursor("sagittal")}
-												stage="viewer"
 											/>
 										</ViewportFrame>
 
@@ -490,7 +486,6 @@ export default function App() {
 												zoom={mprZoom}
 												onZoomChange={setMprZoom}
 												onSelect={updateCursor("axial")}
-												stage="viewer"
 											/>
 										</ViewportFrame>
 									</div>

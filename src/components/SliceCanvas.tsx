@@ -16,8 +16,6 @@ interface SliceCanvasProps {
 	crosshair?: boolean;
 	crosshairColors?: { vertical: string; horizontal: string };
 	label?: string;
-	className?: string;
-	stage?: "import" | "viewer";
 	fit?: "contain" | "cover";
 	displayAspect?: number;
 	zoom?: number;
@@ -116,8 +114,6 @@ export function SliceCanvas({
 	crosshair = true,
 	crosshairColors,
 	label,
-	className,
-	stage = "viewer",
 	fit = "contain",
 	displayAspect = 1,
 	zoom = 1,
@@ -625,18 +621,10 @@ export function SliceCanvas({
 	};
 
 	return (
-		<div
-			className={["h-full min-h-0", className ?? ""].join(" ").trim()}
-			data-stage={stage}
-		>
+		<div className="h-full min-h-0">
 			<div
 				ref={surfaceRef}
-				className={[
-					"relative h-full min-h-0 overflow-hidden bg-black",
-					stage === "viewer" ? "w-full" : "min-h-[220px]",
-				]
-					.join(" ")
-					.trim()}
+				className="relative h-full min-h-0 w-full overflow-hidden bg-black"
 				onPointerDown={handlePointerDown}
 				onPointerMove={handlePointerMove}
 				onPointerUp={handlePointerEnd}
