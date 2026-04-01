@@ -58,6 +58,7 @@ const WINDOW_MIN = 256;
 const WINDOW_MAX = 4095;
 const LEVEL_MIN = 0;
 const LEVEL_MAX = 4095;
+const DEFAULT_MPR_ZOOM = 1;
 
 const PRIMARY_BUTTON =
   'inline-flex items-center rounded border border-slate-700 bg-slate-200 px-3 py-1.5 text-sm font-medium text-slate-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50';
@@ -121,6 +122,7 @@ export default function App() {
   const [cursor, setCursor] = useState<VolumeCursor | null>(null);
   const [windowLevelDraft, setWindowLevelDraft] = useState<SliceWindowLevel>(DEFAULT_WINDOW_LEVEL);
   const [windowLevel, setWindowLevel] = useState<SliceWindowLevel>(DEFAULT_WINDOW_LEVEL);
+  const [mprZoom, setMprZoom] = useState(DEFAULT_MPR_ZOOM);
   const [downsampled3D, setDownsampled3D] = useState(false);
   const [prepared3D, setPrepared3D] = useState<PreparedVolumeFor3D | null>(null);
   const directorySupported =
@@ -146,6 +148,7 @@ export default function App() {
     setCursor(null);
     setWindowLevelDraft(DEFAULT_WINDOW_LEVEL);
     setWindowLevel(DEFAULT_WINDOW_LEVEL);
+    setMprZoom(DEFAULT_MPR_ZOOM);
     setPrepared3D(null);
     setDownsampled3D(false);
     setProgress(IDLE_PROGRESS);
@@ -169,6 +172,7 @@ export default function App() {
       setCursor(createCenterCursor(loaded.volume));
       setWindowLevelDraft(DEFAULT_WINDOW_LEVEL);
       setWindowLevel(DEFAULT_WINDOW_LEVEL);
+      setMprZoom(DEFAULT_MPR_ZOOM);
       setProgress({
         stage: 'ready',
         detail: `Loaded ${loaded.meta.scanId}`,
@@ -380,6 +384,8 @@ export default function App() {
                       crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.axial }}
                       label="XZ"
                       fit="cover"
+                      zoom={mprZoom}
+                      onZoomChange={setMprZoom}
                       onSelect={updateCursor('coronal')}
                       stage="viewer"
                     />
@@ -397,6 +403,8 @@ export default function App() {
                       crosshairColors={{ vertical: PLANE_COLORS.coronal, horizontal: PLANE_COLORS.axial }}
                       label="YZ"
                       fit="cover"
+                      zoom={mprZoom}
+                      onZoomChange={setMprZoom}
                       onSelect={updateCursor('sagittal')}
                       stage="viewer"
                     />
@@ -414,6 +422,8 @@ export default function App() {
                       crosshairColors={{ vertical: PLANE_COLORS.sagittal, horizontal: PLANE_COLORS.coronal }}
                       label="XY"
                       fit="cover"
+                      zoom={mprZoom}
+                      onZoomChange={setMprZoom}
                       onSelect={updateCursor('axial')}
                       stage="viewer"
                     />
