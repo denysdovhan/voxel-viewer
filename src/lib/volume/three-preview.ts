@@ -18,6 +18,8 @@ interface CursorPlaneSet {
   dispose: () => void;
 }
 
+const CURSOR_PLANE_OVERSCAN = 1.2;
+
 export async function createThreePreview(
   host: HTMLDivElement,
   volume: PreparedVolumeFor3D,
@@ -207,9 +209,18 @@ function buildCursorPlanes(
     new three.LineBasicMaterial({ color: PLANE_COLORS.sagittal, transparent: true, opacity: 0.8, depthTest: false }),
   ];
 
-  const xyGeometry = new three.PlaneGeometry(worldSize[0], worldSize[1]);
-  const xzGeometry = new three.PlaneGeometry(worldSize[0], worldSize[2]);
-  const yzGeometry = new three.PlaneGeometry(worldSize[2], worldSize[1]);
+  const xyGeometry = new three.PlaneGeometry(
+    worldSize[0] * CURSOR_PLANE_OVERSCAN,
+    worldSize[1] * CURSOR_PLANE_OVERSCAN,
+  );
+  const xzGeometry = new three.PlaneGeometry(
+    worldSize[0] * CURSOR_PLANE_OVERSCAN,
+    worldSize[2] * CURSOR_PLANE_OVERSCAN,
+  );
+  const yzGeometry = new three.PlaneGeometry(
+    worldSize[2] * CURSOR_PLANE_OVERSCAN,
+    worldSize[1] * CURSOR_PLANE_OVERSCAN,
+  );
 
   const xyPlane = new three.Mesh(xyGeometry, materials[0]);
   const xzPlane = new three.Mesh(xzGeometry, materials[1]);
