@@ -53,6 +53,14 @@ function normalizeWheelDelta(event: WheelEvent<HTMLDivElement>, surfaceHeight: n
   return event.deltaY;
 }
 
+function clampCoveredOffset(offset: number, contentSize: number, viewportSize: number): number {
+  if (contentSize <= viewportSize) {
+    return (viewportSize - contentSize) / 2;
+  }
+
+  return clamp(offset, viewportSize - contentSize, 0);
+}
+
 export function SliceCanvas({
   image,
   crosshairPoint,
@@ -130,7 +138,7 @@ export function SliceCanvas({
       left: (surfaceSize.width - width) / 2,
       top: (surfaceSize.height - height) / 2,
       width,
-        height,
+      height,
     };
   }, [displayAspect, fit, image, surfaceSize.height, surfaceSize.width]);
 
@@ -147,16 +155,16 @@ export function SliceCanvas({
 
     const width = baseImageRect.width * zoom;
     const height = baseImageRect.height * zoom;
-    const anchorX = baseImageRect.left + anchorXRatio * baseImageRect.width;
-    const anchorY = baseImageRect.top + anchorYRatio * baseImageRect.height;
+    const desiredLeft = surfaceSize.width / 2 - anchorXRatio * width;
+    const desiredTop = surfaceSize.height / 2 - anchorYRatio * height;
 
     return {
-      left: anchorX - anchorXRatio * width,
-      top: anchorY - anchorYRatio * height,
+      left: clampCoveredOffset(desiredLeft, width, surfaceSize.width),
+      top: clampCoveredOffset(desiredTop, height, surfaceSize.height),
       width,
       height,
     };
-  }, [anchorXRatio, anchorYRatio, baseImageRect.height, baseImageRect.left, baseImageRect.top, baseImageRect.width, image, zoom]);
+  }, [anchorXRatio, anchorYRatio, baseImageRect.height, baseImageRect.width, image, surfaceSize.height, surfaceSize.width, zoom]);
 
   const x = imageRect.left + anchorXRatio * imageRect.width;
   const y = imageRect.top + anchorYRatio * imageRect.height;
