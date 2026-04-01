@@ -58,9 +58,11 @@ Current runtime flow:
 
 ## Iteration Workflow
 
-- step 2 is active: 3D quality and interaction
+- when starting work on any area, search `.agents/log` for relevant history first so prior implementation context and rejected approaches are understood before editing
+- step 3 is active: MPR zoom and scrub navigation
 - keep phase-1 summary in `.agents/log/1-3d-viewer.md`
 - keep phase-2 notes in `.agents/log/2-3d-quality-and-plane-controls.md`
+- keep phase-3 notes in `.agents/log/3-mpr-zoom-and-scrub-navigation.md`
 - inspect `xray/` and `original-software/` before changing reconstruction logic
 - prefer minimal diffs and preserve already-working rendering paths
 - validate each meaningful code pass with `npm run build`

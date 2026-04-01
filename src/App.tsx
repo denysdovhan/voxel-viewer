@@ -229,26 +229,29 @@ export default function App() {
 
         const [width, height, depth] = volume.meta.dimensions;
         if (axis === 'axial') {
-          return {
+          const next = {
             x: clamp(Math.round(xRatio * (width - 1)), 0, width - 1),
             y: clamp(Math.round(yRatio * (height - 1)), 0, height - 1),
             z: current.z,
           };
+          return next.x === current.x && next.y === current.y ? current : next;
         }
 
         if (axis === 'coronal') {
-          return {
+          const next = {
             x: clamp(Math.round(xRatio * (width - 1)), 0, width - 1),
             y: current.y,
             z: clamp(Math.round((1 - yRatio) * (depth - 1)), 0, depth - 1),
           };
+          return next.x === current.x && next.z === current.z ? current : next;
         }
 
-        return {
+        const next = {
           x: current.x,
           y: clamp(Math.round(xRatio * (height - 1)), 0, height - 1),
           z: clamp(Math.round((1 - yRatio) * (depth - 1)), 0, depth - 1),
         };
+        return next.y === current.y && next.z === current.z ? current : next;
       });
     };
 
@@ -502,6 +505,12 @@ export default function App() {
                 <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Navigation</div>
                 <div className="mt-2 text-xs text-slate-400">
                   Cursor {cursor ? `${cursor.x + 1}, ${cursor.y + 1}, ${cursor.z + 1}` : 'n/a'}
+                </div>
+                <div className="mt-1 text-xs text-slate-400">
+                  Drag inside any 2D pane to scrub linked slices.
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Wheel or pinch to zoom; when zoomed, scrubbing keeps the crosshair centered when possible.
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
                   Coronal and sagittal views are flipped so superior anatomy stays at the top.

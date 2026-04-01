@@ -11,12 +11,16 @@ const DEFAULT_LEVEL = 1800;
 const MAX_3D_TEXTURE_EDGE = 512;
 const MAX_SLICE_CACHE_ENTRIES = 12;
 
-type Axis = 'axial' | 'coronal' | 'sagittal';
+enum Axis {
+  Axial = 'axial',
+  Coronal = 'coronal',
+  Sagittal = 'sagittal',
+}
 
 interface VolumeCacheEntry {
-  axial: Map<string, Uint8ClampedArray>;
-  coronal: Map<string, Uint8ClampedArray>;
-  sagittal: Map<string, Uint8ClampedArray>;
+  axial: Map<string, SliceImage>;
+  coronal: Map<string, SliceImage>;
+  sagittal: Map<string, SliceImage>;
 }
 
 const volumeCache = new WeakMap<LoadedVolume, VolumeCacheEntry>();
@@ -75,12 +79,12 @@ function getVolumeCache(volume: LoadedVolume): VolumeCacheEntry {
   return cache;
 }
 
-function cacheForAxis(cache: VolumeCacheEntry, axis: Axis): Map<string, Uint8ClampedArray> {
+function cacheForAxis(cache: VolumeCacheEntry, axis: Axis): Map<string, SliceImage> {
   return cache[axis];
 }
 
-function sliceCacheKey(cursor: VolumeCursor, window: number, level: number): string {
-  return `${cursor.x}|${cursor.y}|${cursor.z}|${window}|${level}`;
+function sliceCacheKey(sliceIndex: number, window: number, level: number): string {
+  return `${sliceIndex}|${window}|${level}`;
 }
 
 function toRgbaBuffer(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8ClampedArray {
@@ -95,32 +99,95 @@ function toRgbaBuffer(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8Cl
   return rgba;
 }
 
+function extractAxisSliceIndex(axis: Axis, cursor: VolumeCursor): number {
+  switch (axis) {
+    case Axis.Axial:
+      return cursor.z;
+    case Axis.Coronal:
+      return cursor.y;
+    case Axis.Sagittal:
+      return cursor.x;
+  }
+}
+
+function axisSliceLimit(
+  axis: Axis,
+  width: number,
+  height: number,
+  depth: number,
+): number {
+  switch (axis) {
+    case Axis.Axial:
+      return depth - 1;
+    case Axis.Coronal:
+      return height - 1;
+    case Axis.Sagittal:
+      return width - 1;
+  }
+}
+
+function axisImageShape(
+  axis: Axis,
+  width: number,
+  height: number,
+  depth: number,
+): Pick<SliceImage, 'width' | 'height'> {
+  switch (axis) {
+    case Axis.Axial:
+      return { width, height };
+    case Axis.Coronal:
+      return { width, height: depth };
+    case Axis.Sagittal:
+      return { width: height, height: depth };
+  }
+}
+
 function sampleAxisGray(
   volume: LoadedVolume,
   axis: Axis,
-  cursor: VolumeCursor,
+  sliceIndex: number,
   window: number,
   level: number,
 ): Uint8ClampedArray {
+  const [width, height, depth] = volume.meta.dimensions;
+  const slice = clamp(Math.round(sliceIndex), 0, axisSliceLimit(axis, width, height, depth));
+
+  switch (axis) {
+    case Axis.Axial:
+      return sampleAxialGray(volume, slice, window, level, width, height, depth);
+    case Axis.Coronal:
+      return sampleCoronalGray(volume, slice, window, level, width, height, depth);
+    case Axis.Sagittal:
+      return sampleSagittalGray(volume, slice, window, level, width, height, depth);
+  }
+}
+
+function extractAxisImageData(
+  volume: LoadedVolume,
+  axis: Axis,
+  sliceIndex: number,
+  window: number,
+  level: number,
+): SliceImage {
   const cache = cacheForAxis(getVolumeCache(volume), axis);
-  const key = sliceCacheKey(cursor, window, level);
+  const key = sliceCacheKey(sliceIndex, window, level);
   const cached = cache.get(key);
   if (cached) return cached;
 
   const [width, height, depth] = volume.meta.dimensions;
-  const gray =
-    axis === 'axial'
-      ? sampleAxialGray(volume, cursor.z, window, level, width, height, depth)
-      : axis === 'coronal'
-        ? sampleCoronalGray(volume, cursor.y, window, level, width, height, depth)
-        : sampleSagittalGray(volume, cursor.x, window, level, width, height, depth);
+  const gray = sampleAxisGray(volume, axis, sliceIndex, window, level);
+  const shape = axisImageShape(axis, width, height, depth);
+  const image: SliceImage = {
+    ...shape,
+    data: grayToRgba(gray),
+  };
 
   if (cache.size >= MAX_SLICE_CACHE_ENTRIES) {
     const oldestKey = cache.keys().next().value;
     if (oldestKey) cache.delete(oldestKey);
   }
-  cache.set(key, gray);
-  return gray;
+  cache.set(key, image);
+  return image;
 }
 
 function sampleAxialGray(
@@ -192,8 +259,7 @@ export function extractAxialImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  const [width, height] = volume.meta.dimensions;
-  return { width, height, data: grayToRgba(sampleAxisGray(volume, 'axial', cursor, window, level)) };
+  return extractAxisImage(volume, Axis.Axial, cursor.z, { window, level });
 }
 
 export function extractCoronalImage(
@@ -202,8 +268,7 @@ export function extractCoronalImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  const [width, , depth] = volume.meta.dimensions;
-  return { width, height: depth, data: grayToRgba(sampleAxisGray(volume, 'coronal', cursor, window, level)) };
+  return extractAxisImage(volume, Axis.Coronal, cursor.y, { window, level });
 }
 
 export function extractSagittalImage(
@@ -212,8 +277,7 @@ export function extractSagittalImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): SliceImage {
   const { window, level } = resolveWindowLevel(windowLevel);
-  const [, height, depth] = volume.meta.dimensions;
-  return { width: height, height: depth, data: grayToRgba(sampleAxisGray(volume, 'sagittal', cursor, window, level)) };
+  return extractAxisImage(volume, Axis.Sagittal, cursor.x, { window, level });
 }
 
 export function extractSliceGrayImage(
@@ -223,7 +287,17 @@ export function extractSliceGrayImage(
   windowLevel?: Partial<SliceWindowLevel>,
 ): Uint8ClampedArray {
   const { window, level } = resolveWindowLevel(windowLevel);
-  return sampleAxisGray(volume, axis, cursor, window, level);
+  return sampleAxisGray(volume, axis, extractAxisSliceIndex(axis, cursor), window, level);
+}
+
+function extractAxisImage(
+  volume: LoadedVolume,
+  axis: Axis,
+  sliceIndex: number,
+  windowLevel?: Partial<SliceWindowLevel>,
+): SliceImage {
+  const { window, level } = resolveWindowLevel(windowLevel);
+  return extractAxisImageData(volume, axis, sliceIndex, window, level);
 }
 
 export function grayToRgba(gray: ArrayLike<number>, out?: Uint8ClampedArray): Uint8ClampedArray {

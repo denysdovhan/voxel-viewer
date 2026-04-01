@@ -2,7 +2,7 @@
 
 ## Scope
 
-Phase 2 starts here. Panorama is no longer the primary target.
+Panorama is no longer the primary target.
 
 This phase focuses on improving the 3D viewer:
 
