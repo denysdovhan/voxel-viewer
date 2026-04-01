@@ -1,9 +1,8 @@
-import type { ParsedVolumeMeta, PanoramaMeta, ScanFolderEntry, ScanFolderSource } from '../../types';
+import type { ParsedVolumeMeta, ScanFolderEntry, ScanFolderSource } from '../../types';
 
 const VOL_HEADER_RE = /^(.*)_vol_0$/;
 const VOL_SLICE_RE = /^(.*)_vol_0_(\d+)$/;
 const GWG_RE = /\.gwg$/i;
-const PROJ_RE = /^(.*)_proj_0$/;
 const GZIP_MAGIC = 0x1f8b;
 
 export interface ImportFailure extends Error {
@@ -22,11 +21,6 @@ const extractNumber = (input: string, tag: string): number | undefined => {
   return Number.isFinite(parsed) ? parsed : undefined;
 };
 
-const extractNumberList = (input: string, tag: string): number[] => {
-  const value = extractText(input, tag);
-  return value ? value.split(/[\s,;]+/).map((item) => Number.parseFloat(item)).filter(Number.isFinite) : [];
-};
-
 const readMaybeGzipText = async (entry: ScanFolderEntry): Promise<string> => {
   const buffer = await entry.file.arrayBuffer();
   const view = new Uint8Array(buffer);
@@ -39,13 +33,11 @@ const readMaybeGzipText = async (entry: ScanFolderEntry): Promise<string> => {
 
 export async function parseGalileosFolder(source: ScanFolderSource): Promise<{
   meta: ParsedVolumeMeta;
-  panorama?: PanoramaMeta;
   filesByName: Map<string, File>;
 }> {
   const filesByName = new Map(source.entries.map((entry) => [entry.relativePath || entry.name, entry.file]));
   const gwgFiles = source.entries.filter((entry) => GWG_RE.test(entry.name));
   const headerFiles = source.entries.filter((entry) => VOL_HEADER_RE.test(entry.name));
-  const projectFiles = source.entries.filter((entry) => PROJ_RE.test(entry.name));
   const sliceGroups = source.entries
     .map((entry) => {
       const match = VOL_SLICE_RE.exec(entry.name);
@@ -105,29 +97,13 @@ export async function parseGalileosFolder(source: ScanFolderSource): Promise<{
     headerFileName: header.name,
     slicePrefix,
     sliceFiles: sliceGroups.sort((a, b) => a.index - b.index).map((item) => item.entry.relativePath || item.entry.name),
-    projectFileName: projectFiles[0]?.name,
   };
-
-  const panorama = projectFiles[0]
-    ? parsePanoramaMeta(await readMaybeGzipText(projectFiles[0]))
-    : undefined;
 
   if (sliceGroups.length !== new Set(sliceGroups.map((item) => item.entry.name)).size) {
     throw issue('E_DUPLICATE', 'duplicate slice names detected');
   }
 
-  return { meta, panorama, filesByName };
-}
-
-export function parsePanoramaMeta(xml: string): PanoramaMeta {
-  return {
-    curveType: extractText(xml, 'CurveType') || 'unknown',
-    thicknessScale: extractNumber(xml, 'ThicknessScale') ?? 1,
-    projSize: [extractNumber(xml, 'ProjSizeX') ?? 0, extractNumber(xml, 'ProjSizeY') ?? 0],
-    voxelSize: [extractNumber(xml, 'VoxelSizeX') ?? 0.16, extractNumber(xml, 'VoxelSizeZ') ?? 0.16],
-    positionsX: extractNumberList(xml, 'PositionX'),
-    positionsY: extractNumberList(xml, 'PositionY'),
-  };
+  return { meta, filesByName };
 }
 
 function issue(code: string, message: string): ImportFailure {

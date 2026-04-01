@@ -7,8 +7,6 @@ interface ViewportFrameProps {
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
-  density?: 'compact' | 'regular';
-  chrome?: 'framed' | 'flush';
   stage?: 'import' | 'viewer';
 }
 
@@ -19,20 +17,15 @@ export function ViewportFrame({
   actions,
   children,
   className,
-  density = 'regular',
-  chrome = 'framed',
   stage = 'viewer',
 }: ViewportFrameProps) {
   return (
     <section
       className={[
-        'relative h-full min-h-0 overflow-hidden bg-slate-950/80',
-        chrome === 'framed' ? 'rounded border border-slate-800' : 'rounded-none border-0',
-        'p-0',
+        'relative h-full min-h-0 overflow-hidden bg-slate-950/80 rounded-none border-0 p-0',
         className ?? '',
       ].join(' ').trim()}
       data-stage={stage}
-      data-density={density}
     >
       <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 bg-gradient-to-b from-slate-950/92 via-slate-950/68 to-transparent px-3 py-2">
         <div className="space-y-0.5">

@@ -21,10 +21,8 @@ function resolveProgressPercent(progress: ImportProgress): number {
       return 18 + local * 8;
     case 'inflating-slices':
       return 26 + local * 54;
-    case 'preparing-panorama':
-      return 80 + local * 12;
     case 'preparing-3d':
-      return 92 + local * 6;
+      return 80 + local * 20;
     case 'ready':
       return 100;
     case 'error':

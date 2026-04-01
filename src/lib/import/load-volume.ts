@@ -1,7 +1,6 @@
 import type {
   ImportProgress,
   LoadedVolume,
-  PanoramaMeta,
   ParsedVolumeMeta,
   PreparedVolumeFor3D,
   ScanFolderSource,
@@ -12,7 +11,6 @@ type WorkerRequest = {
   type: 'assemble-volume';
   files: Array<{ name: string; path: string; buffer: ArrayBuffer }>;
   meta: ParsedVolumeMeta;
-  panorama?: PanoramaMeta;
 };
 
 type WorkerEvent =
@@ -21,8 +19,6 @@ type WorkerEvent =
       type: 'result';
       volume: LoadedVolume;
       meta: ParsedVolumeMeta;
-      panorama?: PanoramaMeta;
-      panoramaImage: null;
       prepared3D: PreparedVolumeFor3D;
     }
   | { type: 'error'; error: ImportFailure };
@@ -30,8 +26,6 @@ type WorkerEvent =
 export interface LoadedImport {
   volume: LoadedVolume;
   meta: ParsedVolumeMeta;
-  panorama?: PanoramaMeta;
-  panoramaImage: null;
   prepared3D: PreparedVolumeFor3D;
 }
 
@@ -56,7 +50,6 @@ export async function loadVolumeFromFolder(
         })),
     ),
     meta: parsed.meta,
-    panorama: parsed.panorama,
   };
 
   return await new Promise<LoadedImport>((resolve, reject) => {
@@ -72,8 +65,6 @@ export async function loadVolumeFromFolder(
         resolve({
           volume: data.volume,
           meta: data.meta,
-          panorama: data.panorama,
-          panoramaImage: data.panoramaImage,
           prepared3D: data.prepared3D,
         });
         return;

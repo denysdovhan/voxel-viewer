@@ -357,8 +357,6 @@ export default function App() {
                           : 'Native'
                         : 'Preparing'
                     }
-                    density="compact"
-                    chrome="flush"
                   >
                     <VolumeViewport3D
                       volume={prepared3D}
@@ -373,8 +371,6 @@ export default function App() {
                     title="Coronal"
                     subtitle="Frontal · superior at top"
                     status={cursor ? `Y ${cursor.y + 1}/${Math.max(1, dimensions[1])}` : 'No volume'}
-                    density="compact"
-                    chrome="flush"
                   >
                     <SliceCanvas
                       image={slices.coronal}
@@ -391,8 +387,6 @@ export default function App() {
                     title="Sagittal"
                     subtitle="Lateral · superior at top"
                     status={cursor ? `X ${cursor.x + 1}/${Math.max(1, dimensions[0])}` : 'No volume'}
-                    density="compact"
-                    chrome="flush"
                   >
                     <SliceCanvas
                       image={slices.sagittal}
@@ -409,8 +403,6 @@ export default function App() {
                     title="Axial"
                     subtitle="Occlusal"
                     status={cursor ? `Z ${cursor.z + 1}/${Math.max(1, dimensions[2])}` : 'No volume'}
-                    density="compact"
-                    chrome="flush"
                   >
                     <SliceCanvas
                       image={slices.axial}
@@ -501,10 +493,10 @@ export default function App() {
                   Coronal and sagittal views are flipped so superior anatomy stays at the top.
                 </div>
                 <div className="mt-2 text-xs text-slate-400">
-                  {prepared3D?.cropped ? '3D cropped to dense anatomy.' : '3D using full volume.'}
+                  3D using full volume.
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
-                  {downsampled3D ? 'Downsampled after crop.' : 'Higher-resolution crop.'}
+                  {downsampled3D ? 'Downsampled from full volume to fit GPU texture limits.' : 'Native full-volume resolution.'}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">
                   Colored planes in 3D match the current coronal, sagittal, and axial slices.

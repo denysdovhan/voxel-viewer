@@ -19,11 +19,16 @@ export function VolumeViewport3D({
   const instanceRef = useRef<ThreePreviewInstance | null>(null);
   const cursorRef = useRef<VolumeCursor | null>(cursor);
   const [error, setError] = useState<string | null>(null);
+  const [planesVisible, setPlanesVisible] = useState(true);
 
   useEffect(() => {
     cursorRef.current = cursor;
     instanceRef.current?.focusCursor(cursor);
   }, [cursor]);
+
+  useEffect(() => {
+    instanceRef.current?.setPlanesVisible(planesVisible);
+  }, [planesVisible]);
 
   useEffect(() => {
     onDownsampledChange?.(Boolean(volume?.downsampled));
@@ -71,6 +76,7 @@ export function VolumeViewport3D({
 
           instanceRef.current = instance;
           instance.focusCursor(cursorRef.current);
+          instance.setPlanesVisible(planesVisible);
           cleanup = instance.dispose;
         })
         .catch((renderError: unknown) => {
@@ -106,24 +112,27 @@ export function VolumeViewport3D({
   }, [volume]);
 
   return (
-    <div className={['h-full min-h-0', className ?? ''].join(' ').trim()}>
+    <div className={['relative h-full min-h-0 overflow-hidden bg-black', className ?? ''].join(' ').trim()}>
       <div
         ref={hostRef}
-        className="relative h-full min-h-0 overflow-hidden bg-black"
-      >
-        <button
-          type="button"
-          className="absolute right-2 top-2 z-10 rounded border border-slate-700/90 bg-slate-950/85 px-2 py-1 text-[11px] font-medium text-slate-200 backdrop-blur-sm transition hover:bg-slate-900"
-          onClick={() => instanceRef.current?.resetView()}
-        >
-          Reset
-        </button>
-        {error ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/85 px-4 text-center text-xs text-slate-400">
-            {error}
-          </div>
-        ) : null}
+        className="absolute inset-0 h-full min-h-0 overflow-hidden"
+      />
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
+          <button
+            type="button"
+            className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] text-slate-300 transition hover:bg-slate-900"
+            onClick={() => setPlanesVisible((current) => !current)}
+          >
+            {planesVisible ? 'Hide planes' : 'Show planes'}
+          </button>
+        </div>
       </div>
+      {error ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/85 px-4 text-center text-xs text-slate-400">
+          {error}
+        </div>
+      ) : null}
     </div>
   );
 }

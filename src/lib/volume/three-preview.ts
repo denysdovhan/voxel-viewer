@@ -7,7 +7,7 @@ type VolumeShaderModule = any;
 export interface ThreePreviewInstance {
   dispose: () => void;
   focusCursor: (cursor: VolumeCursor | null) => void;
-  resetView: () => void;
+  setPlanesVisible: (visible: boolean) => void;
 }
 
 interface CursorPlaneSet {
@@ -52,7 +52,7 @@ function buildPreview(
   renderer.domElement.style.display = 'block';
   renderer.domElement.style.width = '100%';
   renderer.domElement.style.height = '100%';
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
   renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
   renderer.outputColorSpace = three.SRGBColorSpace;
   renderer.setClearColor(0x050b13, 1);
@@ -149,11 +149,8 @@ function buildPreview(
       camera.lookAt(currentTarget);
       controls.update();
     },
-    resetView() {
-      camera.position.copy(currentTarget.clone().add(initialOffset));
-      controls.target.copy(currentTarget);
-      camera.lookAt(currentTarget);
-      controls.update();
+    setPlanesVisible(visible) {
+      cursorPlanes.root.visible = visible;
     },
     dispose() {
       window.cancelAnimationFrame(frame);
@@ -210,7 +207,7 @@ function buildCursorPlanes(
 
   const xyGeometry = new three.PlaneGeometry(worldSize[0], worldSize[1]);
   const xzGeometry = new three.PlaneGeometry(worldSize[0], worldSize[2]);
-  const yzGeometry = new three.PlaneGeometry(worldSize[1], worldSize[2]);
+  const yzGeometry = new three.PlaneGeometry(worldSize[2], worldSize[1]);
 
   const xyPlane = new three.Mesh(xyGeometry, materials[0]);
   const xzPlane = new three.Mesh(xzGeometry, materials[1]);
@@ -291,14 +288,12 @@ function buildColormap(three: ThreeModule) {
   const data = new Uint8Array(256 * 4);
   for (let i = 0; i < 256; i += 1) {
     const t = i / 255;
-    const r = Math.round(46 + t * 192);
-    const g = Math.round(34 + t * 180);
-    const b = Math.round(22 + t * 122);
-    const a = Math.round(24 + t * 231);
+    const luminance = Math.round(18 + t * 237);
+    const a = Math.round(10 + t * 245);
     const offset = i * 4;
-    data[offset] = r;
-    data[offset + 1] = g;
-    data[offset + 2] = b;
+    data[offset] = luminance;
+    data[offset + 1] = luminance;
+    data[offset + 2] = luminance;
     data[offset + 3] = a;
   }
 

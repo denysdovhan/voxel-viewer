@@ -19,10 +19,8 @@ Current runtime flow:
 2. `src/lib/import/*` parses GALILEOS metadata and slice naming.
 3. `src/workers/volume.worker.ts` inflates gzip slices and prepares the 3D volume off the main thread.
 4. `src/App.tsx` renders the current viewer shell and linked MPR navigation.
-5. `src/lib/volume/index.ts` provides MPR extraction plus experimental panorama helpers.
+5. `src/lib/volume/index.ts` provides MPR extraction and 3D preparation helpers.
 6. `src/lib/volume/three-preview.ts` provides the current working 3D renderer.
-
-Important: panorama code exists, but panorama generation is still under heavy iteration and should not be treated as a stable baseline.
 
 ## Working Areas
 
@@ -33,7 +31,7 @@ Important: panorama code exists, but panorama generation is still under heavy it
 - `src/lib/import/*`
   - folder scanning, GALILEOS metadata parsing, worker bridge
 - `src/lib/volume/index.ts`
-  - MPR extraction, panorama experiments, 3D preparation helpers
+  - MPR extraction and 3D preparation helpers
 - `src/lib/volume/three-preview.ts`
   - current visible Three.js renderer and 3D interaction
 
@@ -45,7 +43,7 @@ Important: panorama code exists, but panorama generation is still under heavy it
   - reference material for reverse-engineering original GALILEOS behavior
 - external reference used in this thread:
   - `Nashev/GalileosVoxelViewer`
-  - useful for voxel loading and axis interpretation, not for pano generation
+  - useful for voxel loading and axis interpretation
 
 ## Technical Decisions
 
@@ -54,16 +52,16 @@ Important: panorama code exists, but panorama generation is still under heavy it
 - keep coronal and sagittal views superior-at-top
 - keep window/level sliders on draft state plus debounced commit
 - keep the currently visible Three.js renderer path unless the user explicitly asks to replace it
-- do not assume `_proj_0` is a stored panorama image; it is seed/project metadata
-- do not reintroduce local persistence during step-1 panorama work
+- do not reintroduce local persistence yet; treat it as a separate future feature
 - the redundant folder-input UI path has been removed and should stay removed unless the user asks for it back
+- 3D is now the primary enhancement track
 
 ## Iteration Workflow
 
-- step 1 is still active: panorama and 3D stabilization
-- panorama correctness is the current readiness blocker
-- keep all step-1 notes in `.agents/log/1-panorama-and-3d-stabilization-plan.md`
-- inspect `xray/` and `original-software/` before changing pano or 3D reconstruction logic
+- step 2 is active: 3D quality and interaction
+- keep phase-1 summary in `.agents/log/1-3d-viewer.md`
+- keep phase-2 notes in `.agents/log/2-3d-quality-and-plane-controls.md`
+- inspect `xray/` and `original-software/` before changing reconstruction logic
 - prefer minimal diffs and preserve already-working rendering paths
 - validate each meaningful code pass with `npm run build`
 

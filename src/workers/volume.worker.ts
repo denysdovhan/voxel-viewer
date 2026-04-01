@@ -3,7 +3,6 @@ import { prepareVolumeFor3D } from '../lib/volume';
 import type {
   ImportProgress,
   LoadedVolume,
-  PanoramaMeta,
   ParsedVolumeMeta,
   PreparedVolumeFor3D,
 } from '../types';
@@ -12,7 +11,6 @@ type WorkerRequest = {
   type: 'assemble-volume';
   files: Array<{ name: string; path: string; buffer: ArrayBuffer }>;
   meta: ParsedVolumeMeta;
-  panorama?: PanoramaMeta;
 };
 
 type WorkerEvent =
@@ -21,8 +19,6 @@ type WorkerEvent =
       type: 'result';
       volume: LoadedVolume;
       meta: ParsedVolumeMeta;
-      panorama?: PanoramaMeta;
-      panoramaImage: null;
       prepared3D: PreparedVolumeFor3D;
     }
   | { type: 'error'; error: { code: string; message: string } };
@@ -37,8 +33,6 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
         type: 'result',
         volume,
         meta: event.data.meta,
-        panorama: event.data.panorama,
-        panoramaImage: null,
         prepared3D,
       } satisfies WorkerEvent;
 

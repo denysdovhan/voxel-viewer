@@ -22,22 +22,12 @@ export interface ParsedVolumeMeta {
   headerFileName: string;
   slicePrefix: string;
   sliceFiles: string[];
-  projectFileName?: string;
 }
 
 export interface LoadedVolume {
   meta: ParsedVolumeMeta;
   voxels: Uint16Array;
   histogram: Uint32Array;
-}
-
-export interface PanoramaMeta {
-  curveType: string;
-  thicknessScale: number;
-  projSize: [number, number];
-  voxelSize: [number, number];
-  positionsX: number[];
-  positionsY: number[];
 }
 
 export interface ImportIssue {
@@ -52,7 +42,6 @@ export interface ImportProgress {
     | 'parsing-meta'
     | 'inflating-slices'
     | 'assembling'
-    | 'preparing-panorama'
     | 'preparing-3d'
     | 'ready'
     | 'error';
@@ -76,16 +65,6 @@ export interface SliceImage {
   width: number;
   height: number;
   data: Uint8ClampedArray;
-}
-
-export interface PanoramaImage {
-  width: number;
-  height: number;
-  data: Uint8ClampedArray;
-  mode: 'metadata-seeded' | 'volume-derived' | 'fallback-arch';
-  path: Float32Array;
-  zRange: [number, number];
-  displayAspect: number;
 }
 
 export interface PreparedVolumeFor3D {
