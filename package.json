@@ -1,41 +1,43 @@
 {
-	"name": "dental-xray-web",
-	"private": true,
-	"version": "0.1.0",
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "tsc -b && vite build",
-		"lint": "biome lint .",
-		"lint:fix": "biome lint --write .",
-		"format": "biome format --write .",
-		"check": "biome check .",
-		"check:fix": "biome check --write .",
-		"prepare": "husky",
-		"preview": "vite preview"
-	},
-	"lint-staged": {
-		"*.{ts,tsx,json}": "biome check --write"
-	},
-	"dependencies": {
-		"@types/lodash": "^4.17.24",
-		"@types/three": "^0.183.1",
-		"fflate": "^0.8.2",
-		"lodash": "^4.17.23",
-		"react": "^19.2.4",
-		"react-dom": "^19.2.4",
-		"three": "^0.183.2"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.4.10",
-		"@tailwindcss/vite": "^4.2.2",
-		"@types/react": "^19.2.14",
-		"@types/react-dom": "^19.2.3",
-		"@vitejs/plugin-react": "^5.1.4",
-		"husky": "^9.1.7",
-		"lint-staged": "^16.4.0",
-		"tailwindcss": "^4.2.2",
-		"typescript": "^5.9.3",
-		"vite": "^7.2.0"
-	}
+  "name": "dental-xray-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "prepare": "husky",
+    "preview": "vite preview"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,json}": "biome check --write"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.17.24",
+    "@types/three": "^0.183.1",
+    "clsx": "^2.1.1",
+    "fflate": "^0.8.2",
+    "lodash": "^4.17.23",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.0"
+  }
 }

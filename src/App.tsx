@@ -29,6 +29,7 @@ import type {
   SliceWindowLevel,
   VolumeCursor,
 } from './types';
+import { cn } from './utils/cn';
 
 const IDLE_PROGRESS: ImportProgress = {
   stage: 'idle',
@@ -366,11 +367,21 @@ export default function App() {
       ) : (
         <div className="h-full overflow-hidden bg-slate-800">
           <div
-            className={`grid h-full gap-px ${sidebarVisible ? 'grid-cols-[minmax(0,1fr)_minmax(288px,22vw)]' : 'grid-cols-1'}`}
+            className={cn(
+              'grid h-full gap-px',
+              sidebarVisible
+                ? 'grid-cols-[minmax(0,1fr)_minmax(288px,22vw)]'
+                : 'grid-cols-1',
+            )}
           >
             <section className="min-h-0 min-w-0">
               <div
-                className={`grid h-full min-h-0 min-w-0 gap-px bg-slate-800 ${axisViewsVisible ? 'grid-rows-[1.22fr_0.95fr]' : 'grid-rows-1'}`}
+                className={cn(
+                  'grid h-full min-h-0 min-w-0 gap-px bg-slate-800',
+                  axisViewsVisible
+                    ? 'grid-rows-[1.22fr_0.95fr]'
+                    : 'grid-rows-1',
+                )}
               >
                 <div className="grid min-h-0 min-w-0 grid-cols-1 gap-px bg-slate-800">
                   <ViewportFrame
