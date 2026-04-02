@@ -1,9 +1,14 @@
-import type { PreparedVolumeFor3D, VolumeCursor } from '../../../types';
+import type {
+  PreparedVolumeFor3D,
+  ReadonlyVec3,
+  Vec3,
+  VolumeCursor,
+} from '../../../types';
 import type { ThreeModule } from '../types';
 
 export function resolveAxisScale(
   spacing: PreparedVolumeFor3D['spacing'],
-): [number, number, number] {
+): Vec3 {
   const positive = spacing.filter((value) => value > 0);
   const minSpacing = positive.length > 0 ? Math.min(...positive) : 1;
   return [
@@ -16,7 +21,7 @@ export function resolveAxisScale(
 export function applyDistanceLimits(
   camera: { far: number; updateProjectionMatrix: () => void },
   controls: { minDistance: number; maxDistance: number },
-  worldSize: readonly [number, number, number],
+  worldSize: ReadonlyVec3,
   target: { x: number; y: number; z: number },
 ): void {
   const minDistance = resolveMinimumCameraDistance(worldSize, target);
@@ -28,7 +33,7 @@ export function applyDistanceLimits(
 }
 
 function resolveMinimumCameraDistance(
-  worldSize: readonly [number, number, number],
+  worldSize: ReadonlyVec3,
   target: { x: number; y: number; z: number },
 ): number {
   const corners = [
@@ -64,7 +69,7 @@ function clampRatio(offset: number, size: number): number {
 export function cursorToWorldTarget(
   three: ThreeModule,
   volume: PreparedVolumeFor3D,
-  axisScale: readonly [number, number, number],
+  axisScale: ReadonlyVec3,
   cursor: VolumeCursor,
 ) {
   const ratioX = clampRatio(

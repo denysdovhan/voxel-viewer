@@ -1,9 +1,9 @@
 import { gunzipSync } from 'fflate';
-import type { LoadedVolume } from '../../types';
-import { ImportStage } from '../../types';
-import { post } from './progress';
-import { buildScalarHistogram } from './scalars';
-import type { VolumeAssemblerContext } from './types';
+import type { LoadedVolume } from '../../../types';
+import { ImportStage } from '../../../types';
+import { post } from '../progress';
+import { buildScalarHistogram } from '../scalars';
+import type { VolumeAssemblerContext } from '../types';
 
 export async function assembleGalileosVolume({
   meta,

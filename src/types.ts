@@ -1,4 +1,11 @@
 export type FileMap = Map<string, File>;
+export type Vec3 = [number, number, number];
+export type ReadonlyVec3 = readonly [number, number, number];
+
+export interface RangeBounds {
+  min: number;
+  max: number;
+}
 
 export enum ScanFolderSourceKind {
   DirectoryHandle = 'directory-handle',
@@ -15,6 +22,10 @@ export interface ScanFolderSource {
   kind: ScanFolderSourceKind;
   label: string;
   entries: ScanFolderEntry[];
+}
+
+export interface DirectoryPickerWindow extends Window {
+  showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
 }
 
 export type ScanFormat = 'dicom' | 'galileos' | 'onevolume';
@@ -34,10 +45,10 @@ export interface ParsedVolumeMeta {
   format: ScanFormat;
   formatLabel: string;
   scanId: string;
-  dimensions: [number, number, number];
-  sourceDimensions?: [number, number, number];
-  sourceOffset?: [number, number, number];
-  spacing: [number, number, number];
+  dimensions: Vec3;
+  sourceDimensions?: Vec3;
+  sourceOffset?: Vec3;
+  spacing: Vec3;
   scalarRange: [number, number];
   initialWindowLevel: SliceWindowLevel;
   nativeValueScale?: {
@@ -92,11 +103,17 @@ export interface SliceImage {
   data: Uint8ClampedArray;
 }
 
+export interface ViewerSlices {
+  axial: SliceImage | null;
+  coronal: SliceImage | null;
+  sagittal: SliceImage | null;
+}
+
 export interface PreparedVolumeFor3D {
-  dimensions: [number, number, number];
-  sourceDimensions: [number, number, number];
-  origin: [number, number, number];
-  spacing: [number, number, number];
+  dimensions: Vec3;
+  sourceDimensions: Vec3;
+  origin: Vec3;
+  spacing: Vec3;
   voxels: Uint8Array;
   scalarRange: [number, number];
   downsampled: boolean;

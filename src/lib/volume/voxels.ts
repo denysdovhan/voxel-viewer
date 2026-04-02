@@ -1,8 +1,6 @@
-import type { LoadedVolume } from '../../types';
+import type { LoadedVolume, ReadonlyVec3 } from '../../types';
 
-export function getVolumeDimensions(
-  volume: LoadedVolume,
-): readonly [number, number, number] {
+export function getVolumeDimensions(volume: LoadedVolume): ReadonlyVec3 {
   return volume.meta.dimensions;
 }
 

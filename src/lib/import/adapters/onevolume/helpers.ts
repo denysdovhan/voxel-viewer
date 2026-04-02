@@ -1,4 +1,8 @@
-import type { ScanFolderEntry, ScanFolderSource } from '../../../../types';
+import type {
+  ScanFolderEntry,
+  ScanFolderSource,
+  Vec3,
+} from '../../../../types';
 import type { ImportFailure } from '../../types';
 
 export const CT_VOL_NAME = 'CT_0.vol';
@@ -9,8 +13,8 @@ const ONEVOLUME_ARRAY_HEADER = 'CArray3D';
 export const ONEVOLUME_WINDOW_SCALE = 100;
 
 export interface OneVolumeCrop {
-  dimensions: [number, number, number];
-  offset: [number, number, number];
+  dimensions: Vec3;
+  offset: Vec3;
 }
 
 export function decodeText(bytes: Uint8Array): string {
@@ -77,14 +81,14 @@ export function parseCsvValue(csv: string, key: string): number | undefined {
 }
 
 export function resolveOneVolumeCrop(
-  sourceDimensions: [number, number, number],
+  sourceDimensions: Vec3,
   bounds: [number, number, number, number, number, number],
-  spacing: [number, number, number],
+  spacing: Vec3,
   constantsXml?: string,
 ): OneVolumeCrop | undefined {
   if (!constantsXml) return undefined;
 
-  const physicalDimensions: [number, number, number] = [
+  const physicalDimensions: Vec3 = [
     parseXmlNumber(constantsXml, 'dXX') ?? Number.NaN,
     parseXmlNumber(constantsXml, 'dYY') ?? Number.NaN,
     parseXmlNumber(constantsXml, 'dZZ') ?? Number.NaN,
@@ -99,7 +103,7 @@ export function resolveOneVolumeCrop(
       1,
       Math.min(sourceDimensions[index], Math.round(value / spacing[index])),
     ),
-  ) as [number, number, number];
+  ) as Vec3;
 
   if (
     targetDimensions[0] === sourceDimensions[0] &&
@@ -110,7 +114,7 @@ export function resolveOneVolumeCrop(
   }
 
   const [xMin, xMax, yMin, yMax, zMin, zMax] = bounds;
-  const asymmetryOffsets: [number, number, number] = [
+  const asymmetryOffsets: Vec3 = [
     Math.max(0, -xMin - xMax),
     Math.max(0, -yMin - yMax),
     Math.max(0, -zMin - zMax),
@@ -119,7 +123,7 @@ export function resolveOneVolumeCrop(
     const source = sourceDimensions[index];
     const preferred = asymmetryOffsets[index];
     return Math.max(0, Math.min(source - target, preferred));
-  }) as [number, number, number];
+  }) as Vec3;
 
   return {
     dimensions: targetDimensions,

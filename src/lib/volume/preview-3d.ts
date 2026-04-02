@@ -1,4 +1,4 @@
-import type { LoadedVolume, PreparedVolumeFor3D } from '../../types';
+import type { LoadedVolume, PreparedVolumeFor3D, Vec3 } from '../../types';
 import { clamp } from './math';
 
 const MAX_3D_TEXTURE_EDGE = 512;
@@ -78,7 +78,6 @@ function resolveHistogramPercentile(
 
   return scalarRange[1];
 }
-
 function estimatePreviewThreshold(
   volume: LoadedVolume,
   voxels: Int16Array,
@@ -120,7 +119,7 @@ export function prepareVolumeFor3D(volume: LoadedVolume): PreparedVolumeFor3D {
   const full = {
     dimensions: volume.meta.dimensions,
     sourceDimensions: volume.meta.dimensions,
-    origin: [0, 0, 0] as [number, number, number],
+    origin: [0, 0, 0] as Vec3,
     spacing: volume.meta.spacing,
     voxels: volume.voxels,
     scalarRange: volume.meta.scalarRange,

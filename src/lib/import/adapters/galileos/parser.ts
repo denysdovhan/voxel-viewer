@@ -2,6 +2,7 @@ import type {
   ParsedVolumeMeta,
   ScanFolderEntry,
   ScanFolderSource,
+  Vec3,
 } from '../../../../types';
 import { getEntryPath } from '../utils';
 import {
@@ -80,7 +81,7 @@ export async function parseGalileosFolder(source: ScanFolderSource): Promise<{
   const dimensionMatch = headerText.match(
     /(\d+)\s*[xX]\s*(\d+)\s*[xX]\s*(\d+)/,
   );
-  const dimensions: [number, number, number] = dimensionMatch
+  const dimensions: Vec3 = dimensionMatch
     ? [
         Number.parseInt(dimensionMatch[1], 10),
         Number.parseInt(dimensionMatch[2], 10),
@@ -92,7 +93,7 @@ export async function parseGalileosFolder(source: ScanFolderSource): Promise<{
         Math.round(extractNumber(headerText, 'VolSizeZ') ?? sliceGroups.length),
       ];
 
-  const spacing: [number, number, number] = [
+  const spacing: Vec3 = [
     extractNumber(headerText, 'VoxelSizeX') ??
       extractNumber(headerText, 'VoxelSize') ??
       extractNumber(headerText, 'Spacing') ??

@@ -46,12 +46,6 @@ export async function loadVolumeFromFolder(
       }
       if (data.type === 'result') {
         worker.terminate();
-        onProgress?.({
-          stage: ImportStage.Ready,
-          detail: 'Viewer ready',
-          completed: 1,
-          total: 1,
-        });
         resolve({
           volume: data.volume,
           meta: data.meta,

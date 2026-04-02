@@ -1,4 +1,8 @@
-import type { ParsedVolumeMeta, ScanFolderSource } from '../../../../types';
+import type {
+  ParsedVolumeMeta,
+  ScanFolderSource,
+  Vec3,
+} from '../../../../types';
 import type { ParsedImportResult } from '../../types';
 import { getEntryPath, resolveScanId } from '../utils';
 import {
@@ -25,12 +29,12 @@ function buildOneVolumeMeta(
   constantsXml?: string,
 ): ParsedVolumeMeta {
   const [xMin, xMax, yMin, yMax, zMin, zMax] = bounds;
-  const sourceDimensions: [number, number, number] = [
+  const sourceDimensions: Vec3 = [
     xMax - xMin + 1,
     yMax - yMin + 1,
     zMax - zMin + 1,
   ];
-  const spacing: [number, number, number] = [
+  const spacing: Vec3 = [
     parseXmlNumber(xml, 'tfXGridSize') ?? 0.16,
     parseXmlNumber(xml, 'tfYGridSize') ?? 0.16,
     parseXmlNumber(xml, 'tfZGridSize') ?? 0.16,

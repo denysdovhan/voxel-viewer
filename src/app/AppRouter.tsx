@@ -1,0 +1,40 @@
+import { lazy, Suspense, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { APP_ROUTES } from '../constants';
+import { useDentalViewerApp } from './useDentalViewerApp';
+
+const ImportPage = lazy(() => import('../pages/ImportPage'));
+const ViewerPage = lazy(() => import('../pages/ViewerPage'));
+
+function RouteFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
+      <div className="rounded border border-slate-800 bg-slate-950/90 px-4 py-3 text-sm text-slate-400">
+        Loading viewer shell...
+      </div>
+    </main>
+  );
+}
+
+export function AppRouter() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const app = useDentalViewerApp();
+  const targetPath = app.volume ? APP_ROUTES.viewer : APP_ROUTES.import;
+
+  useEffect(() => {
+    if (location.pathname === targetPath) {
+      return;
+    }
+
+    navigate(targetPath, { replace: true });
+  }, [location.pathname, navigate, targetPath]);
+
+  const ActivePage = app.volume ? ViewerPage : ImportPage;
+
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <ActivePage app={app} />
+    </Suspense>
+  );
+}

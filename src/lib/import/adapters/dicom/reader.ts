@@ -1,4 +1,9 @@
-import type { ScanFolderEntry, ScanFolderSource } from '../../../../types';
+import type {
+  ReadonlyVec3,
+  ScanFolderEntry,
+  ScanFolderSource,
+  Vec3,
+} from '../../../../types';
 
 const DICM_MAGIC = 'DICM';
 const HEADER_READ_BYTES = 8192;
@@ -26,7 +31,7 @@ export interface DicomHeader {
   bitsStored: number;
   columns: number;
   imageOrientationPatient: [number, number, number, number, number, number];
-  imagePositionPatient: [number, number, number];
+  imagePositionPatient: Vec3;
   instanceNumber?: number;
   pixelDataLength: number;
   pixelDataOffset: number;
@@ -74,10 +79,7 @@ function parseTag(group: number, element: number): string {
   return ((group << 16) | element).toString(16).padStart(8, '0');
 }
 
-function cross(
-  a: readonly [number, number, number],
-  b: readonly [number, number, number],
-): [number, number, number] {
+function cross(a: ReadonlyVec3, b: ReadonlyVec3): Vec3 {
   return [
     a[1] * b[2] - a[2] * b[1],
     a[2] * b[0] - a[0] * b[2],
@@ -85,10 +87,7 @@ function cross(
   ];
 }
 
-function dot(
-  a: readonly [number, number, number],
-  b: readonly [number, number, number],
-): number {
+function dot(a: ReadonlyVec3, b: ReadonlyVec3): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
@@ -114,7 +113,7 @@ export function parseImplicitLittleEndianDicom(
   let imageOrientationPatient:
     | [number, number, number, number, number, number]
     | undefined;
-  let imagePositionPatient: [number, number, number] | undefined;
+  let imagePositionPatient: Vec3 | undefined;
   let instanceNumber: number | undefined;
   let pixelDataLength: number | undefined;
   let pixelDataOffset: number | undefined;
@@ -241,16 +240,8 @@ export function parseImplicitLittleEndianDicom(
 }
 
 export function computeDicomSliceLocation(header: DicomHeader): number {
-  const row = header.imageOrientationPatient.slice(0, 3) as [
-    number,
-    number,
-    number,
-  ];
-  const column = header.imageOrientationPatient.slice(3, 6) as [
-    number,
-    number,
-    number,
-  ];
+  const row = header.imageOrientationPatient.slice(0, 3) as Vec3;
+  const column = header.imageOrientationPatient.slice(3, 6) as Vec3;
   return dot(header.imagePositionPatient, cross(row, column));
 }
 

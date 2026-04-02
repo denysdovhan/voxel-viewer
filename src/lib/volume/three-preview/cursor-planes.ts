@@ -10,14 +10,15 @@ import type {
   Vector3,
 } from 'three';
 import { PLANE_COLORS } from '../../../constants';
+import type { ReadonlyVec3 } from '../../../types';
 import type { CursorPlaneSet, ThreeModule } from '../types';
 
 const CURSOR_PLANE_OVERSCAN = 1.2;
 
 function buildIntersectionGeometry(
   three: ThreeModule,
-  start: readonly [number, number, number],
-  end: readonly [number, number, number],
+  start: ReadonlyVec3,
+  end: ReadonlyVec3,
 ): BufferGeometry {
   const geometry = new three.BufferGeometry();
   geometry.setFromPoints([
@@ -29,7 +30,7 @@ function buildIntersectionGeometry(
 
 export function buildCursorPlanes(
   three: ThreeModule,
-  worldSize: readonly [number, number, number],
+  worldSize: ReadonlyVec3,
   center: Vector3,
 ): CursorPlaneSet {
   const root: Group = new three.Group();
