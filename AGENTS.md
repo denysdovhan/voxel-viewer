@@ -19,18 +19,33 @@ Current runtime flow:
 2. `src/lib/import/adapters/*` detects the folder layout and parses format-specific metadata.
 3. `src/lib/import/load-volume.ts` builds one stable worker request for the selected format.
 4. `src/workers/volume.worker.ts` delegates assembly to `src/workers/volume/*` and prepares the 3D volume off the main thread.
-5. `src/App.tsx` renders the current viewer shell and linked MPR navigation.
-6. `src/lib/volume/*` provides MPR extraction and 3D preparation helpers.
-7. `src/lib/volume/three-preview/*` provides the current working Three.js renderer.
+5. `src/app/useDentalViewerApp.ts` commits the loaded volume, cursor, window/level state, and viewer controls.
+6. `src/app/AppRouter.tsx` syncs the current app state to `/` and `/viewer`.
+7. `src/pages/ImportPage.tsx` and `src/pages/ViewerPage.tsx` render the current page shell.
+8. `src/lib/volume/*` provides MPR extraction and 3D preparation helpers.
+9. `src/lib/volume/three-preview/*` provides the current working Three.js renderer.
 
 ## Working Areas
 
 - `src/App.tsx`
-  - import flow, viewer layout, linked cursor, window/level controls, stage transitions, format guidance copy
+  - router host only
+- `src/app/AppRouter.tsx`
+  - URL synchronization between import and viewer state
+- `src/app/useDentalViewerApp.ts`
+  - import flow, linked cursor, window/level controls, stage transitions, viewer state
+- `src/pages/ImportPage.tsx`
+  - homepage/import screen, folder guidance copy, loading shell
+- `src/pages/ViewerPage.tsx`
+  - loaded viewer screen composition
+- `src/components/AxisViewportGrid.tsx`
+  - extracted coronal / sagittal / axial viewport layout
+- `src/components/ViewerSidebar.tsx`
+  - extracted study metadata, display controls, progress, and actions
 - `src/lib/import/adapters/*`
   - per-format folder matching, metadata parsing, worker payload shaping
 - `src/lib/import/load-volume.ts`
   - adapter selection and worker lifecycle
+  - do not emit final-ready UI state from here; final readiness is owned by `useDentalViewerApp`
 - `src/workers/volume.worker.ts`
   - worker entrypoint only; keep it thin
 - `src/workers/volume/*`
@@ -66,6 +81,8 @@ Current runtime flow:
 - keep coronal and sagittal views superior-at-top
 - keep window/level sliders on draft state plus debounced commit
 - keep the currently visible Three.js renderer path unless the user explicitly asks to replace it
+- keep `volume` as the source of truth for whether the app is in import mode or viewer mode
+- keep router syncing secondary to app state; do not reintroduce route-first gating for viewer visibility
 - do not reintroduce local persistence yet; treat it as a separate future feature
 - the redundant folder-input UI path has been removed and should stay removed unless the user asks for it back
 - 3D is now the primary enhancement track
