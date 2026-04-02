@@ -1,168 +1,168 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 import {
-	createThreePreview,
-	type ThreePreviewInstance,
-} from "../lib/volume/three-preview";
-import type { PreparedVolumeFor3D, VolumeCursor } from "../types";
-import { Button } from "./Button";
+  createThreePreview,
+  type ThreePreviewInstance,
+} from '../lib/volume/three-preview';
+import type { PreparedVolumeFor3D, VolumeCursor } from '../types';
+import { Button } from './Button';
 
 interface VolumeViewport3DProps {
-	volume: PreparedVolumeFor3D | null;
-	cursor?: VolumeCursor | null;
-	axisViewsVisible?: boolean;
-	onAxisViewsVisibleChange?: (visible: boolean) => void;
-	sidebarVisible?: boolean;
-	onSidebarVisibleChange?: (visible: boolean) => void;
-	onDownsampledChange?: (downsampled: boolean) => void;
+  volume: PreparedVolumeFor3D | null;
+  cursor?: VolumeCursor | null;
+  axisViewsVisible?: boolean;
+  onAxisViewsVisibleChange?: (visible: boolean) => void;
+  sidebarVisible?: boolean;
+  onSidebarVisibleChange?: (visible: boolean) => void;
+  onDownsampledChange?: (downsampled: boolean) => void;
 }
 
 export function VolumeViewport3D({
-	volume,
-	cursor = null,
-	axisViewsVisible = true,
-	onAxisViewsVisibleChange,
-	sidebarVisible = true,
-	onSidebarVisibleChange,
-	onDownsampledChange,
+  volume,
+  cursor = null,
+  axisViewsVisible = true,
+  onAxisViewsVisibleChange,
+  sidebarVisible = true,
+  onSidebarVisibleChange,
+  onDownsampledChange,
 }: VolumeViewport3DProps) {
-	const hostRef = useRef<HTMLDivElement | null>(null);
-	const instanceRef = useRef<ThreePreviewInstance | null>(null);
-	const cursorRef = useRef<VolumeCursor | null>(cursor);
-	const [error, setError] = useState<string | null>(null);
-	const [planesVisible, setPlanesVisible] = useState(true);
-	const planesVisibleRef = useRef(planesVisible);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const instanceRef = useRef<ThreePreviewInstance | null>(null);
+  const cursorRef = useRef<VolumeCursor | null>(cursor);
+  const [error, setError] = useState<string | null>(null);
+  const [planesVisible, setPlanesVisible] = useState(true);
+  const planesVisibleRef = useRef(planesVisible);
 
-	useEffect(() => {
-		cursorRef.current = cursor;
-		instanceRef.current?.focusCursor(cursor);
-	}, [cursor]);
+  useEffect(() => {
+    cursorRef.current = cursor;
+    instanceRef.current?.focusCursor(cursor);
+  }, [cursor]);
 
-	useEffect(() => {
-		planesVisibleRef.current = planesVisible;
-		instanceRef.current?.setPlanesVisible(planesVisible);
-	}, [planesVisible]);
+  useEffect(() => {
+    planesVisibleRef.current = planesVisible;
+    instanceRef.current?.setPlanesVisible(planesVisible);
+  }, [planesVisible]);
 
-	useEffect(() => {
-		onDownsampledChange?.(Boolean(volume?.downsampled));
-	}, [onDownsampledChange, volume?.downsampled]);
+  useEffect(() => {
+    onDownsampledChange?.(Boolean(volume?.downsampled));
+  }, [onDownsampledChange, volume?.downsampled]);
 
-	useEffect(() => {
-		const host = hostRef.current;
-		if (!host || !volume) {
-			setError(null);
-			return undefined;
-		}
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || !volume) {
+      setError(null);
+      return undefined;
+    }
 
-		let cleanup: () => void = () => {};
-		let cancelled = false;
-		let mounted = false;
-		let frame = 0;
-		let retryTimer = 0;
-		let retryCount = 0;
-		let resizeObserver: ResizeObserver | null = null;
-		setError(null);
+    let cleanup: () => void = () => {};
+    let cancelled = false;
+    let mounted = false;
+    let frame = 0;
+    let retryTimer = 0;
+    let retryCount = 0;
+    let resizeObserver: ResizeObserver | null = null;
+    setError(null);
 
-		const scheduleRetry = () => {
-			if (cancelled || mounted || retryCount >= 4) return;
-			retryCount += 1;
-			window.clearTimeout(retryTimer);
-			retryTimer = window.setTimeout(() => {
-				mount();
-				if (!mounted) scheduleRetry();
-			}, 120 * retryCount);
-		};
+    const scheduleRetry = () => {
+      if (cancelled || mounted || retryCount >= 4) return;
+      retryCount += 1;
+      window.clearTimeout(retryTimer);
+      retryTimer = window.setTimeout(() => {
+        mount();
+        if (!mounted) scheduleRetry();
+      }, 120 * retryCount);
+    };
 
-		const mount = () => {
-			if (cancelled || mounted) return;
-			if (host.clientWidth < 32 || host.clientHeight < 32) return;
-			mounted = true;
-			resizeObserver?.disconnect();
-			resizeObserver = null;
+    const mount = () => {
+      if (cancelled || mounted) return;
+      if (host.clientWidth < 32 || host.clientHeight < 32) return;
+      mounted = true;
+      resizeObserver?.disconnect();
+      resizeObserver = null;
 
-			void createThreePreview(host, volume)
-				.then((instance) => {
-					if (cancelled) {
-						instance.dispose();
-						return;
-					}
+      void createThreePreview(host, volume)
+        .then((instance) => {
+          if (cancelled) {
+            instance.dispose();
+            return;
+          }
 
-					instanceRef.current = instance;
-					instance.focusCursor(cursorRef.current);
-					instance.setPlanesVisible(planesVisibleRef.current);
-					cleanup = instance.dispose;
-				})
-				.catch((renderError: unknown) => {
-					if (cancelled) return;
-					mounted = false;
-					if (retryCount < 4) {
-						scheduleRetry();
-						return;
-					}
-					setError(
-						renderError instanceof Error
-							? renderError.message
-							: "3D preview failed",
-					);
-				});
-		};
+          instanceRef.current = instance;
+          instance.focusCursor(cursorRef.current);
+          instance.setPlanesVisible(planesVisibleRef.current);
+          cleanup = instance.dispose;
+        })
+        .catch((renderError: unknown) => {
+          if (cancelled) return;
+          mounted = false;
+          if (retryCount < 4) {
+            scheduleRetry();
+            return;
+          }
+          setError(
+            renderError instanceof Error
+              ? renderError.message
+              : '3D preview failed',
+          );
+        });
+    };
 
-		frame = window.requestAnimationFrame(() => {
-			mount();
-			if (mounted || cancelled) return;
+    frame = window.requestAnimationFrame(() => {
+      mount();
+      if (mounted || cancelled) return;
 
-			resizeObserver = new ResizeObserver(() => {
-				mount();
-			});
-			resizeObserver.observe(host);
-			scheduleRetry();
-		});
+      resizeObserver = new ResizeObserver(() => {
+        mount();
+      });
+      resizeObserver.observe(host);
+      scheduleRetry();
+    });
 
-		return () => {
-			cancelled = true;
-			window.cancelAnimationFrame(frame);
-			window.clearTimeout(retryTimer);
-			resizeObserver?.disconnect();
-			instanceRef.current = null;
-			cleanup();
-		};
-	}, [volume]);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retryTimer);
+      resizeObserver?.disconnect();
+      instanceRef.current = null;
+      cleanup();
+    };
+  }, [volume]);
 
-	return (
-		<div className="relative h-full min-h-0 overflow-hidden bg-black">
-			<div
-				ref={hostRef}
-				className="absolute inset-0 h-full min-h-0 overflow-hidden"
-			/>
-			<div className="absolute inset-0 z-20 pointer-events-none">
-				<div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
-					<Button
-						variant="overlay"
-						size="sm"
-						onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
-					>
-						{axisViewsVisible ? "Hide axis views" : "Show axis views"}
-					</Button>
-					<Button
-						variant="overlay"
-						size="sm"
-						onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
-					>
-						{sidebarVisible ? "Hide sidebar" : "Show sidebar"}
-					</Button>
-					<Button
-						variant="overlay"
-						size="sm"
-						onClick={() => setPlanesVisible((current) => !current)}
-					>
-						{planesVisible ? "Hide planes" : "Show planes"}
-					</Button>
-				</div>
-			</div>
-			{error ? (
-				<div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/85 px-4 text-center text-xs text-slate-400">
-					{error}
-				</div>
-			) : null}
-		</div>
-	);
+  return (
+    <div className="relative h-full min-h-0 overflow-hidden bg-black">
+      <div
+        ref={hostRef}
+        className="absolute inset-0 h-full min-h-0 overflow-hidden"
+      />
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
+          <Button
+            variant="overlay"
+            size="sm"
+            onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
+          >
+            {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
+          </Button>
+          <Button
+            variant="overlay"
+            size="sm"
+            onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
+          >
+            {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+          </Button>
+          <Button
+            variant="overlay"
+            size="sm"
+            onClick={() => setPlanesVisible((current) => !current)}
+          >
+            {planesVisible ? 'Hide planes' : 'Show planes'}
+          </Button>
+        </div>
+      </div>
+      {error ? (
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/85 px-4 text-center text-xs text-slate-400">
+          {error}
+        </div>
+      ) : null}
+    </div>
+  );
 }

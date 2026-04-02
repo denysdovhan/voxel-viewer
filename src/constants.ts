@@ -3,4 +3,3 @@ export const PLANE_COLORS = {
   coronal: '#f59e0b',
   sagittal: '#a78bfa',
 } as const;
-

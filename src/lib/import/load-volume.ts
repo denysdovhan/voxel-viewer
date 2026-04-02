@@ -1,12 +1,7 @@
 import type { ImportProgress, ScanFolderSource } from '../../types';
 import { ImportStage } from '../../types';
-import { type ImportFailure, parseGalileosFolder } from './parse-galileos';
-import type {
-  LoadedImport,
-  VolumeWorkerEvent,
-  VolumeWorkerRequest,
-} from './types';
-import { VolumeWorkerRequestType } from './types';
+import { importFormatAdapters } from './adapters';
+import type { ImportFailure, LoadedImport, VolumeWorkerEvent } from './types';
 
 export async function loadVolumeFromFolder(
   source: ScanFolderSource,
@@ -18,10 +13,20 @@ export async function loadVolumeFromFolder(
     completed: 0,
     total: 1,
   });
-  const parsed = await parseGalileosFolder(source);
+  const adapter = importFormatAdapters.find((candidate) =>
+    candidate.matches(source),
+  );
+  if (!adapter) {
+    throw makeError(
+      'E_FORMAT',
+      'Unsupported folder layout. Select a GALILEOS study, a OneVolume export root, or a DICOM slice folder.',
+    );
+  }
+
+  const parsed = await adapter.parse(source);
   onProgress?.({
     stage: ImportStage.ParsingMeta,
-    detail: 'Parsed folder metadata',
+    detail: `Parsed ${adapter.label} metadata`,
     completed: 1,
     total: 3,
   });
@@ -30,21 +35,7 @@ export async function loadVolumeFromFolder(
     new URL('../../workers/volume.worker.ts', import.meta.url),
     { type: 'module' },
   );
-  const payload: VolumeWorkerRequest = {
-    type: VolumeWorkerRequestType.AssembleVolume,
-    files: await Promise.all(
-      source.entries
-        .filter((entry) =>
-          parsed.meta.sliceFiles.includes(entry.relativePath || entry.name),
-        )
-        .map(async (entry) => ({
-          name: entry.name,
-          path: entry.relativePath || entry.name,
-          buffer: await entry.file.arrayBuffer(),
-        })),
-    ),
-    meta: parsed.meta,
-  };
+  const payload = await adapter.buildWorkerRequest(source, parsed);
 
   return await new Promise<LoadedImport>((resolve, reject) => {
     worker.onmessage = (event: MessageEvent<VolumeWorkerEvent>) => {
@@ -79,12 +70,6 @@ export async function loadVolumeFromFolder(
       payload,
       payload.files.map((file) => file.buffer),
     );
-    onProgress?.({
-      stage: ImportStage.InflatingSlices,
-      detail: 'Inflating gzip slices',
-      completed: 0,
-      total: parsed.meta.sliceFiles.length + 1,
-    });
   });
 }
 

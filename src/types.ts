@@ -17,6 +17,8 @@ export interface ScanFolderSource {
   entries: ScanFolderEntry[];
 }
 
+export type ScanFormat = 'dicom' | 'galileos' | 'onevolume';
+
 export enum ImportStage {
   Idle = 'idle',
   Scanning = 'scanning',
@@ -29,10 +31,19 @@ export enum ImportStage {
 }
 
 export interface ParsedVolumeMeta {
+  format: ScanFormat;
+  formatLabel: string;
   scanId: string;
   dimensions: [number, number, number];
+  sourceDimensions?: [number, number, number];
+  sourceOffset?: [number, number, number];
   spacing: [number, number, number];
   scalarRange: [number, number];
+  initialWindowLevel: SliceWindowLevel;
+  nativeValueScale?: {
+    slope: number;
+    intercept: number;
+  };
   sliceCount: number;
   bytesPerVoxel: number;
   headerFileName: string;
@@ -42,7 +53,7 @@ export interface ParsedVolumeMeta {
 
 export interface LoadedVolume {
   meta: ParsedVolumeMeta;
-  voxels: Uint16Array;
+  voxels: Int16Array;
   histogram: Uint32Array;
 }
 

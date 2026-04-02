@@ -3,8 +3,9 @@ import type {
   LoadedVolume,
   ParsedVolumeMeta,
   PreparedVolumeFor3D,
+  ScanFolderSource,
+  ScanFormat,
 } from '../../types';
-import type { ImportFailure } from './parse-galileos';
 
 export enum VolumeWorkerRequestType {
   AssembleVolume = 'assemble-volume',
@@ -18,8 +19,13 @@ export interface VolumeWorkerFile {
 
 export interface AssembleVolumeWorkerRequest {
   type: VolumeWorkerRequestType.AssembleVolume;
+  format: ScanFormat;
   files: VolumeWorkerFile[];
   meta: ParsedVolumeMeta;
+}
+
+export interface ImportFailure extends Error {
+  code: string;
 }
 
 export type VolumeWorkerRequest = AssembleVolumeWorkerRequest;
@@ -55,4 +61,19 @@ export interface LoadedImport {
   volume: LoadedVolume;
   meta: ParsedVolumeMeta;
   prepared3D: PreparedVolumeFor3D;
+}
+
+export interface ParsedImportResult {
+  meta: ParsedVolumeMeta;
+}
+
+export interface ImportFormatAdapter {
+  id: ScanFormat;
+  label: string;
+  matches(source: ScanFolderSource): boolean;
+  parse(source: ScanFolderSource): Promise<ParsedImportResult>;
+  buildWorkerRequest(
+    source: ScanFolderSource,
+    parsed: ParsedImportResult,
+  ): Promise<VolumeWorkerRequest>;
 }

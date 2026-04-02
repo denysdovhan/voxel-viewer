@@ -6,5 +6,4 @@ dist
 *.tsbuildinfo
 
 # Reference files
-original-software
-xray
+ct

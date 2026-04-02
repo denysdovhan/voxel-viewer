@@ -36,7 +36,7 @@ import { cn } from './utils/cn';
 
 const IDLE_PROGRESS: ImportProgress = {
   stage: ImportStage.Idle,
-  detail: 'Select a GALILEOS folder to begin',
+  detail: 'Select a supported CT folder to begin',
   completed: 0,
   total: 1,
 };
@@ -115,6 +115,35 @@ function formatSpacing(spacing: [number, number, number]): string {
   return spacing.map((value) => value.toFixed(2)).join(' x ');
 }
 
+function resolveWindowBounds(volume: LoadedVolume | null): {
+  min: number;
+  max: number;
+} {
+  if (!volume) return { min: WINDOW_MIN, max: WINDOW_MAX };
+  const span = Math.round(
+    volume.meta.scalarRange[1] - volume.meta.scalarRange[0],
+  );
+  return {
+    min: WINDOW_MIN,
+    max: Math.max(WINDOW_MAX, span, volume.meta.initialWindowLevel.window),
+  };
+}
+
+function resolveLevelBounds(volume: LoadedVolume | null): {
+  min: number;
+  max: number;
+} {
+  if (!volume) return { min: LEVEL_MIN, max: LEVEL_MAX };
+  return {
+    min: Math.min(LEVEL_MIN, Math.floor(volume.meta.scalarRange[0])),
+    max: Math.max(
+      LEVEL_MAX,
+      Math.ceil(volume.meta.scalarRange[1]),
+      volume.meta.initialWindowLevel.level,
+    ),
+  };
+}
+
 export default function App() {
   const [progress, setProgress] = useState<ImportProgress>(IDLE_PROGRESS);
   const [issue, setIssue] = useState<ImportIssue | null>(null);
@@ -182,8 +211,8 @@ export default function App() {
       setVolume(loaded.volume);
       setPrepared3D(loaded.prepared3D);
       setCursor(createCenterCursor(loaded.volume));
-      setWindowLevelDraft(DEFAULT_WINDOW_LEVEL);
-      setWindowLevel(DEFAULT_WINDOW_LEVEL);
+      setWindowLevelDraft(loaded.meta.initialWindowLevel);
+      setWindowLevel(loaded.meta.initialWindowLevel);
       setMprZoom(DEFAULT_MPR_ZOOM);
       setProgress({
         stage: ImportStage.Ready,
@@ -216,6 +245,8 @@ export default function App() {
 
   const dimensions = volume?.meta.dimensions ?? [0, 0, 0];
   const spacing = volume?.meta.spacing ?? [0, 0, 0];
+  const windowBounds = resolveWindowBounds(volume);
+  const levelBounds = resolveLevelBounds(volume);
 
   const openDirectory = async () => {
     const picker = (window as DirectoryPickerWindow).showDirectoryPicker;
@@ -343,12 +374,12 @@ export default function App() {
                   Local-first static viewer
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">
-                  GALILEOS dental x-ray viewer
+                  Local dental CT viewer
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-slate-400">
-                  Import a local scan folder, parse it fully in-browser, and
-                  navigate with a larger 3D overview plus linked orthogonal
-                  views.
+                  Import a supported local study folder, parse it fully
+                  in-browser, and navigate with a larger 3D overview plus linked
+                  orthogonal views.
                 </p>
               </section>
 
@@ -359,10 +390,80 @@ export default function App() {
                 detail={
                   sourceLabel
                     ? `Source: ${sourceLabel}`
-                    : 'Chromium desktop over HTTPS or localhost recommended'
+                    : 'Auto-detects supported GALILEOS, OneVolume, and DICOM folder layouts'
                 }
                 unsupportedHint="Use Chromium desktop for direct folder picking."
               />
+
+              <section className="rounded border border-slate-800 bg-slate-950/70 p-4">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  Supported folders
+                </div>
+                <div className="mt-3 space-y-3 text-sm text-slate-300">
+                  <div>
+                    <div className="font-medium text-slate-100">GALILEOS</div>
+                    <div className="mt-1 text-slate-400">
+                      Legacy GALILEOS study volumes stored as compressed slice
+                      files.
+                    </div>
+                    <div className="mt-1">
+                      Select the study folder that contains{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        *_vol_0
+                      </code>{' '}
+                      and{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        *_vol_0_###
+                      </code>
+                      .
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-100">
+                      OneVolume CT
+                    </div>
+                    <div className="mt-1 text-slate-400">
+                      Native OneVolume volume stored in{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        CT_0.vol
+                      </code>
+                      .
+                    </div>
+                    <div className="mt-1">
+                      Select the{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        CT_*
+                      </code>{' '}
+                      folder, or the export root if you want the app to
+                      auto-detect the nested CT study folder.
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-medium text-slate-100">DICOM CT</div>
+                    <div className="mt-1 text-slate-400">
+                      Standard DICOM slice stacks exported from compatible CT
+                      software.
+                    </div>
+                    <div className="mt-1">
+                      Select the folder that contains the{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        .dcm
+                      </code>{' '}
+                      slices, usually{' '}
+                      <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.9em] text-slate-200">
+                        DICOM/
+                      </code>
+                      .
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 text-xs text-slate-500">
+                  <code className="rounded bg-slate-900 px-1 py-0.5 font-mono text-[0.95em] text-slate-400">
+                    Series_01/
+                  </code>{' '}
+                  is reference material only and is not imported.
+                </div>
+              </section>
 
               <ImportStatus
                 progress={progress}
@@ -530,6 +631,9 @@ export default function App() {
                     {volume?.meta.scanId}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
+                    {volume?.meta.formatLabel}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
                     {dimensions.join(' x ')} voxels
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
@@ -550,8 +654,8 @@ export default function App() {
                   <div className="mt-2.5">
                     <RangeField
                       label="Window"
-                      min={WINDOW_MIN}
-                      max={WINDOW_MAX}
+                      min={windowBounds.min}
+                      max={windowBounds.max}
                       value={windowLevelDraft.window}
                       onChange={handleWindowChange}
                       onCommit={handleWindowCommit}
@@ -562,8 +666,8 @@ export default function App() {
                   <div className="mt-2.5">
                     <RangeField
                       label="Level"
-                      min={LEVEL_MIN}
-                      max={LEVEL_MAX}
+                      min={levelBounds.min}
+                      max={levelBounds.max}
                       value={windowLevelDraft.level}
                       onChange={handleLevelChange}
                       onCommit={handleLevelCommit}
