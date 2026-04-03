@@ -18,9 +18,7 @@ export function FolderPicker({
   return (
     <section className="rounded border border-slate-800 bg-slate-950/70 p-4">
       <div className="space-y-1">
-        <h1 className="text-lg font-semibold text-slate-100">
-          Dental X-Ray Viewer
-        </h1>
+        <h1 className="text-lg font-semibold text-slate-100">Voxel Viewer</h1>
         <p className="text-sm text-slate-400">
           Open a supported CT study folder locally. Browser parsing only.
         </p>

@@ -38,7 +38,7 @@ import {
   resolveWindowBounds,
 } from './helpers';
 
-export interface DentalViewerApp {
+export interface ViewerApp {
   axisViewsVisible: boolean;
   busy: boolean;
   cursor: VolumeCursor | null;
@@ -72,7 +72,7 @@ export interface DentalViewerApp {
   ) => (point: { xRatio: number; yRatio: number }) => void;
 }
 
-export function useDentalViewerApp(): DentalViewerApp {
+export function useViewerApp(): ViewerApp {
   const [progress, setProgress] = useState<ImportProgress>(IDLE_PROGRESS);
   const [issue, setIssue] = useState<ImportIssue | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');

@@ -1,11 +1,11 @@
-import type { DentalViewerApp } from '../app/useDentalViewerApp';
+import type { ViewerApp } from '../app/useViewerApp';
 import { FolderPicker } from '../components/FolderPicker';
 import { ImportStatus, ImportStatusStage } from '../components/ImportStatus';
 import { Notice } from '../components/Notice';
 import { DISCLAIMER_TEXT } from '../constants';
 
 interface ImportPageProps {
-  app: DentalViewerApp;
+  app: ViewerApp;
 }
 
 export default function ImportPage({ app }: ImportPageProps) {
@@ -46,7 +46,7 @@ export default function ImportPage({ app }: ImportPageProps) {
               Local-first static viewer
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">
-              Local dental CT viewer
+              Local voxel viewer
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-400">
               Import a supported local study folder, parse it fully in-browser,

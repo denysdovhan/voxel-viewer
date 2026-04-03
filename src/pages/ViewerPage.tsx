@@ -1,4 +1,4 @@
-import type { DentalViewerApp } from '../app/useDentalViewerApp';
+import type { ViewerApp } from '../app/useViewerApp';
 import { AxisViewportGrid } from '../components/AxisViewportGrid';
 import { ViewerSidebar } from '../components/ViewerSidebar';
 import { ViewportFrame } from '../components/ViewportFrame';
@@ -6,7 +6,7 @@ import { VolumeViewport3D } from '../components/VolumeViewport3D';
 import { cn } from '../utils/cn';
 
 interface ViewerPageProps {
-  app: DentalViewerApp;
+  app: ViewerApp;
 }
 
 export default function ViewerPage({ app }: ViewerPageProps) {

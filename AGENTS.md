@@ -11,7 +11,7 @@
 
 ## Project Workflow
 
-This project is a static, local-first dental CT viewer.
+This project is a static, local-first voxel viewer.
 
 Current runtime flow:
 
@@ -19,7 +19,7 @@ Current runtime flow:
 2. `src/lib/import/adapters/*` detects the folder layout and parses format-specific metadata.
 3. `src/lib/import/load-volume.ts` builds one stable worker request for the selected format.
 4. `src/workers/volume.worker.ts` delegates assembly to `src/workers/volume/*` and prepares the 3D volume off the main thread.
-5. `src/app/useDentalViewerApp.ts` commits the loaded volume, cursor, window/level state, and viewer controls.
+5. `src/app/useViewerApp.ts` commits the loaded volume, cursor, window/level state, and viewer controls.
 6. `src/app/AppRouter.tsx` syncs the current app state to `/` and `/viewer`.
 7. `src/pages/ImportPage.tsx` and `src/pages/ViewerPage.tsx` render the current page shell.
 8. `src/lib/volume/*` provides MPR extraction and 3D preparation helpers.
@@ -31,7 +31,7 @@ Current runtime flow:
   - router host only
 - `src/app/AppRouter.tsx`
   - URL synchronization between import and viewer state
-- `src/app/useDentalViewerApp.ts`
+- `src/app/useViewerApp.ts`
   - import flow, linked cursor, window/level controls, stage transitions, viewer state
 - `src/pages/ImportPage.tsx`
   - homepage/import screen, folder guidance copy, loading shell
@@ -45,7 +45,7 @@ Current runtime flow:
   - per-format folder matching, metadata parsing, worker payload shaping
 - `src/lib/import/load-volume.ts`
   - adapter selection and worker lifecycle
-  - do not emit final-ready UI state from here; final readiness is owned by `useDentalViewerApp`
+  - do not emit final-ready UI state from here; final readiness is owned by `useViewerApp`
 - `src/workers/volume.worker.ts`
   - worker entrypoint only; keep it thin
 - `src/workers/volume/*`

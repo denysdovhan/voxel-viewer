@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { APP_ROUTES } from '../constants';
-import { useDentalViewerApp } from './useDentalViewerApp';
+import { useViewerApp } from './useViewerApp';
 
 const ImportPage = lazy(() => import('../pages/ImportPage'));
 const ViewerPage = lazy(() => import('../pages/ViewerPage'));
@@ -19,7 +19,7 @@ function RouteFallback() {
 export function AppRouter() {
   const location = useLocation();
   const navigate = useNavigate();
-  const app = useDentalViewerApp();
+  const app = useViewerApp();
   const targetPath = app.volume ? APP_ROUTES.viewer : APP_ROUTES.import;
 
   useEffect(() => {
