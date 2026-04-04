@@ -1,10 +1,12 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { Badge } from './Badge';
 
 interface ViewportFrameProps {
-  title: string;
-  subtitle?: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
   status?: ReactNode;
+  statusClassName?: string;
+  statusStyle?: CSSProperties;
   actions?: ReactNode;
   children: ReactNode;
 }
@@ -13,6 +15,8 @@ export function ViewportFrame({
   title,
   subtitle,
   status,
+  statusClassName,
+  statusStyle,
   actions,
   children,
 }: ViewportFrameProps) {
@@ -26,7 +30,11 @@ export function ViewportFrame({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {status && <Badge>{status}</Badge>}
+          {status ? (
+            <Badge className={statusClassName} style={statusStyle}>
+              {status}
+            </Badge>
+          ) : null}
           {actions ? (
             <div className="pointer-events-auto flex items-center gap-2">
               {actions}

@@ -1,3 +1,4 @@
+import { FolderInput } from 'lucide-react';
 import { Button } from './Button';
 
 interface FolderPickerProps {
@@ -33,6 +34,7 @@ export function FolderPicker({
           onClick={onPickDirectory}
           disabled={busy || !directorySupported}
         >
+          <FolderInput className="h-4 w-4" aria-hidden="true" />
           {directorySupported ? 'Open folder' : 'Directory API unavailable'}
         </Button>
       </div>

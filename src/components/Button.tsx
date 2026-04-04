@@ -33,7 +33,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        'inline-flex items-center justify-center rounded border transition disabled:cursor-not-allowed disabled:opacity-50',
+        'inline-flex items-center justify-center gap-1.5 rounded border transition [&_svg]:shrink-0 disabled:cursor-not-allowed disabled:opacity-50',
         variant === 'primary' ? 'font-medium' : '',
         VARIANT_CLASSES[variant],
         SIZE_CLASSES[size],

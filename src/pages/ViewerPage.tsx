@@ -1,3 +1,4 @@
+import { Box } from 'lucide-react';
 import type { ViewerApp } from '../app/useViewerApp';
 import { AxisViewportGrid } from '../components/AxisViewportGrid';
 import { ViewerSidebar } from '../components/ViewerSidebar';
@@ -42,7 +43,15 @@ export default function ViewerPage({ app }: ViewerPageProps) {
             >
               <div className="grid min-h-0 min-w-0 grid-cols-1 gap-px bg-slate-800">
                 <ViewportFrame
-                  title="3D"
+                  title={
+                    <span className="inline-flex items-center gap-1.5">
+                      <Box
+                        className="h-4 w-4 text-slate-400"
+                        aria-hidden="true"
+                      />
+                      3D
+                    </span>
+                  }
                   subtitle="Main navigation volume"
                   status={
                     app.prepared3D

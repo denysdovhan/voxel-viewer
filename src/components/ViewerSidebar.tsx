@@ -1,3 +1,12 @@
+import {
+  ArrowLeft,
+  Box,
+  Contrast,
+  Crosshair,
+  FolderInput,
+  SlidersHorizontal,
+  SunMedium,
+} from 'lucide-react';
 import { formatSpacing } from '../app/helpers';
 import { DISCLAIMER_TEXT } from '../constants';
 import type {
@@ -53,10 +62,14 @@ export function ViewerSidebar({
   onWindowChange,
   onWindowCommit,
 }: ViewerSidebarProps) {
+  const sectionLabelClass =
+    'inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-slate-500';
+
   return (
     <aside className="grid min-h-0 min-w-0 grid-rows-[auto_auto_auto_minmax(0,1fr)_auto] overflow-hidden">
       <section className="min-w-0 rounded border border-slate-800 bg-slate-950/80 p-2.5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+        <div className={sectionLabelClass}>
+          <Box className="h-3.5 w-3.5" aria-hidden="true" />
           Study
         </div>
         <div
@@ -83,12 +96,18 @@ export function ViewerSidebar({
       </section>
 
       <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+        <div className={sectionLabelClass}>
+          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
           Display
         </div>
         <div className="mt-2.5">
           <RangeField
-            label="Window"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                <Contrast className="h-3.5 w-3.5" aria-hidden="true" />
+                Window
+              </span>
+            }
             min={windowBounds.min}
             max={windowBounds.max}
             value={windowLevelDraft.window}
@@ -100,7 +119,12 @@ export function ViewerSidebar({
 
         <div className="mt-2.5">
           <RangeField
-            label="Level"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                <SunMedium className="h-3.5 w-3.5" aria-hidden="true" />
+                Level
+              </span>
+            }
             min={levelBounds.min}
             max={levelBounds.max}
             value={windowLevelDraft.level}
@@ -120,7 +144,8 @@ export function ViewerSidebar({
       </div>
 
       <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+        <div className={sectionLabelClass}>
+          <Crosshair className="h-3.5 w-3.5" aria-hidden="true" />
           Navigation
         </div>
         <div className="mt-2 text-xs text-slate-400">
@@ -153,9 +178,11 @@ export function ViewerSidebar({
       <section className="min-w-0 rounded border border-slate-800 bg-slate-950/70 p-2.5">
         <div className="grid grid-cols-1 gap-2">
           <Button variant="primary" block onClick={onOpenDirectory}>
+            <FolderInput className="h-4 w-4" aria-hidden="true" />
             Open folder
           </Button>
           <Button variant="ghost" block onClick={onBackToImport}>
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Back to import
           </Button>
         </div>

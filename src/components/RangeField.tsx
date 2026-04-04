@@ -1,11 +1,11 @@
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
 interface RangeFieldProps
   extends Omit<
     InputHTMLAttributes<HTMLInputElement>,
     'type' | 'value' | 'min' | 'max' | 'onChange'
   > {
-  label: string;
+  label: ReactNode;
   value: number;
   min: number;
   max: number;

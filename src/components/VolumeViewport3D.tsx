@@ -1,3 +1,10 @@
+import {
+  PanelBottomClose,
+  PanelBottomOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Ratio,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   createThreePreview,
@@ -140,6 +147,11 @@ export function VolumeViewport3D({
             size="sm"
             onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
           >
+            {axisViewsVisible ? (
+              <PanelBottomClose className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <PanelBottomOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
             {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
           </Button>
           <Button
@@ -147,6 +159,11 @@ export function VolumeViewport3D({
             size="sm"
             onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
           >
+            {sidebarVisible ? (
+              <PanelRightClose className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
             {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
           </Button>
           <Button
@@ -154,6 +171,7 @@ export function VolumeViewport3D({
             size="sm"
             onClick={() => setPlanesVisible((current) => !current)}
           >
+            <Ratio className="h-3.5 w-3.5" aria-hidden="true" />
             {planesVisible ? 'Hide planes' : 'Show planes'}
           </Button>
         </div>
