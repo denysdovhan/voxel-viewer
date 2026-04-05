@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
+    "format:check": "biome ci --formatter-enabled=true --linter-enabled=false --assist-enabled=false .",
     "format": "biome format --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
