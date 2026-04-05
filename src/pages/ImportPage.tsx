@@ -38,8 +38,8 @@ export default function ImportPage({ app }: ImportPageProps) {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4 py-8">
+    <main className="min-h-screen overflow-y-auto bg-slate-950 text-slate-100">
+      <div className="mx-auto flex min-h-screen max-w-3xl items-start justify-center px-4 py-8">
         <div className="w-full space-y-3">
           <section className="rounded border border-slate-800 bg-slate-950/80 p-5">
             <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
