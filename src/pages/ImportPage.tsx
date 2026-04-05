@@ -43,15 +43,16 @@ export default function ImportPage({ app }: ImportPageProps) {
         <div className="w-full space-y-3">
           <section className="rounded border border-slate-800 bg-slate-950/80 p-5">
             <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              Local-first static viewer
+              CBCT scan viewer
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">
-              Local voxel viewer
+              voxel-viewer
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-400">
-              Import a supported local study folder, parse it fully in-browser,
-              and navigate with a larger 3D overview plus linked orthogonal
-              views.
+              Inspect CBCT (Cone Beam Computed Tomography) scans directly in the
+              browser from local study folders. The viewer parses supported
+              exports locally and opens them as linked 2D slice views with a 3D
+              volume overview.
             </p>
           </section>
 
@@ -59,13 +60,11 @@ export default function ImportPage({ app }: ImportPageProps) {
             directorySupported={app.directorySupported}
             onPickDirectory={() => void app.openDirectory()}
             busy={app.busy}
-            detail={
-              app.sourceLabel
-                ? `Source: ${app.sourceLabel}`
-                : 'Auto-detects supported GALILEOS, OneVolume, and DICOM folder layouts'
-            }
+            detail={app.sourceLabel ? `Source: ${app.sourceLabel}` : undefined}
             unsupportedHint="Use Chromium desktop for direct folder picking."
           />
+
+          <Notice>{DISCLAIMER_TEXT}</Notice>
 
           <section className="rounded border border-slate-800 bg-slate-950/70 p-4">
             <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -140,8 +139,6 @@ export default function ImportPage({ app }: ImportPageProps) {
             issue={app.issue}
             stage={ImportStatusStage.Import}
           />
-
-          <Notice>{DISCLAIMER_TEXT}</Notice>
         </div>
       </div>
     </main>

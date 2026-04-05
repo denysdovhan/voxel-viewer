@@ -19,9 +19,15 @@ export function FolderPicker({
   return (
     <section className="rounded border border-slate-800 bg-slate-950/70 p-4">
       <div className="space-y-1">
-        <h1 className="text-lg font-semibold text-slate-100">Voxel Viewer</h1>
+        <h2 className="text-lg font-semibold text-slate-100">
+          Open a scan folder
+        </h2>
         <p className="text-sm text-slate-400">
-          Open a supported CT study folder locally. Browser parsing only.
+          Choose a local export folder to load the scan into the viewer.
+        </p>
+        <p className="text-sm text-slate-500">
+          The app builds the volume in-browser and opens linked axial, sagittal,
+          coronal, and 3D views.
         </p>
         {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
         {!directorySupported && unsupportedHint ? (
