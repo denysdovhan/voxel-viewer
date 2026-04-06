@@ -61,7 +61,7 @@ export default function ImportPage({ app }: ImportPageProps) {
             onPickDirectory={() => void app.openDirectory()}
             busy={app.busy}
             detail={app.sourceLabel ? `Source: ${app.sourceLabel}` : undefined}
-            unsupportedHint="Use Chromium desktop for direct folder picking."
+            unsupportedHint="Folder selection needs a browser with directory upload support. Safari on iPhone requires iOS 18.4+."
           />
 
           <Notice>{DISCLAIMER_TEXT}</Notice>

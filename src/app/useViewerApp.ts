@@ -7,7 +7,7 @@ import {
   IDLE_PROGRESS,
 } from '../constants';
 import { loadVolumeFromFolder } from '../lib/import/load-volume';
-import { fromDirectoryHandle } from '../lib/import/scan-folder';
+import type { ScanFolderPicker } from '../lib/import/source-picker';
 import {
   clamp,
   extractAxialImage,
@@ -15,7 +15,6 @@ import {
   extractSagittalImage,
 } from '../lib/volume';
 import {
-  type DirectoryPickerWindow,
   type ImportIssue,
   type ImportProgress,
   ImportStage,
@@ -72,7 +71,13 @@ export interface ViewerApp {
   ) => (point: { xRatio: number; yRatio: number }) => void;
 }
 
-export function useViewerApp(): ViewerApp {
+export interface ViewerAppDependencies {
+  sourcePicker: ScanFolderPicker;
+}
+
+export function useViewerApp({
+  sourcePicker,
+}: ViewerAppDependencies): ViewerApp {
   const [progress, setProgress] = useState<ImportProgress>(IDLE_PROGRESS);
   const [issue, setIssue] = useState<ImportIssue | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
@@ -89,9 +94,7 @@ export function useViewerApp(): ViewerApp {
   );
   const [axisViewsVisible, setAxisViewsVisible] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const directorySupported =
-    typeof window !== 'undefined' &&
-    typeof (window as DirectoryPickerWindow).showDirectoryPicker === 'function';
+  const directorySupported = sourcePicker.supported;
   const busy = isBusy(progress);
   const debouncedCommitWindowLevel = useMemo(
     () =>
@@ -177,17 +180,13 @@ export function useViewerApp(): ViewerApp {
   const levelBounds = resolveLevelBounds(volume);
 
   const openDirectory = async () => {
-    const picker = (window as DirectoryPickerWindow).showDirectoryPicker;
-    if (!picker) return;
-
     try {
-      const handle = await picker();
-      const source = await fromDirectoryHandle(handle);
+      const source = await sourcePicker.pickSource();
+      if (!source) return;
       await loadSource(source);
+      return;
     } catch (error) {
-      if (!isAbortError(error)) {
-        setIssue(makeImportIssue(error));
-      }
+      setIssue(makeImportIssue(error));
     }
   };
 
