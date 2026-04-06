@@ -76,10 +76,14 @@ export function fromFileList(files: FileList): ScanFolderSource {
       file.name,
     file,
   }));
+  const rootLabel =
+    entries
+      .find((entry) => entry.relativePath.includes('/'))
+      ?.relativePath.split('/')[0] || 'selected folder';
 
   return {
     kind: ScanFolderSourceKind.FileList,
-    label: 'selected files',
+    label: rootLabel,
     entries,
   };
 }

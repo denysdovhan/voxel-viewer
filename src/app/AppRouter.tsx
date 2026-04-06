@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { APP_ROUTES } from '../constants';
+import { createDefaultScanFolderPicker } from '../lib/import/source-picker';
 import { useViewerApp } from './useViewerApp';
 
 const ImportPage = lazy(() => import('../pages/ImportPage'));
@@ -18,7 +19,8 @@ function RouteFallback() {
 
 export function AppRouter() {
   const location = useLocation();
-  const app = useViewerApp();
+  const sourcePicker = useMemo(() => createDefaultScanFolderPicker(), []);
+  const app = useViewerApp({ sourcePicker });
   const targetPath = app.volume ? APP_ROUTES.viewer : APP_ROUTES.import;
 
   if (location.pathname !== targetPath) {
