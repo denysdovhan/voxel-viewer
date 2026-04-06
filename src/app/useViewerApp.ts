@@ -36,6 +36,7 @@ import {
   resolveLevelBounds,
   resolveWindowBounds,
 } from './helpers';
+import { isCompactViewerLayout } from './viewer-layout';
 
 export interface ViewerApp {
   axisViewsVisible: boolean;
@@ -49,6 +50,7 @@ export interface ViewerApp {
   mprZoom: number;
   prepared3D: PreparedVolumeFor3D | null;
   progress: ImportProgress;
+  selectedAxis: VolumeAxis;
   sidebarVisible: boolean;
   slices: ViewerSlices;
   sourceLabel: string;
@@ -65,6 +67,7 @@ export interface ViewerApp {
   setAxisViewsVisible: (visible: boolean) => void;
   setDownsampled3D: (downsampled: boolean) => void;
   setMprZoom: (zoom: number) => void;
+  setSelectedAxis: (axis: VolumeAxis) => void;
   setSidebarVisible: (visible: boolean) => void;
   updateCursor: (
     axis: VolumeAxis,
@@ -78,6 +81,7 @@ export interface ViewerAppDependencies {
 export function useViewerApp({
   sourcePicker,
 }: ViewerAppDependencies): ViewerApp {
+  const defaultSidebarVisible = () => !isCompactViewerLayout();
   const [progress, setProgress] = useState<ImportProgress>(IDLE_PROGRESS);
   const [issue, setIssue] = useState<ImportIssue | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
@@ -93,7 +97,8 @@ export function useViewerApp({
     null,
   );
   const [axisViewsVisible, setAxisViewsVisible] = useState(true);
-  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [selectedAxis, setSelectedAxis] = useState(VolumeAxis.Coronal);
+  const [sidebarVisible, setSidebarVisible] = useState(defaultSidebarVisible);
   const directorySupported = sourcePicker.supported;
   const busy = isBusy(progress);
   const debouncedCommitWindowLevel = useMemo(
@@ -121,7 +126,8 @@ export function useViewerApp({
     setPrepared3D(null);
     setDownsampled3D(false);
     setAxisViewsVisible(true);
-    setSidebarVisible(true);
+    setSelectedAxis(VolumeAxis.Coronal);
+    setSidebarVisible(defaultSidebarVisible());
     setProgress(IDLE_PROGRESS);
   });
 
@@ -281,9 +287,11 @@ export function useViewerApp({
     prepared3D,
     progress,
     resetViewer,
+    selectedAxis,
     setAxisViewsVisible,
     setDownsampled3D,
     setMprZoom,
+    setSelectedAxis,
     setSidebarVisible,
     sidebarVisible,
     slices,
