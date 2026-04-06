@@ -16,7 +16,7 @@
     "preview": "vite preview"
   },
   "lint-staged": {
-    "*.{ts,tsx,json}": "biome check --write"
+    "*": "biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"
   },
   "dependencies": {
     "@types/lodash": "^4.17.24",
