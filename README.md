@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo/voxel-viewer-logo.svg" alt="Voxel Viewer logo" width="220" />
+  <img src="./public/voxel-viewer-logo.svg" alt="Voxel Viewer logo" width="220" />
 </p>
 
 <h1 align="center">Voxel Viewer</h1>

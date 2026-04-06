@@ -42,18 +42,30 @@ export default function ImportPage({ app }: ImportPageProps) {
       <div className="mx-auto flex min-h-screen max-w-3xl items-start justify-center px-4 py-8">
         <div className="w-full space-y-3">
           <section className="rounded border border-slate-800 bg-slate-950/80 p-5">
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-              CBCT scan viewer
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">
-              voxel-viewer
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-400">
-              Inspect CBCT (Cone Beam Computed Tomography) scans directly in the
-              browser from local study folders. The viewer parses supported
-              exports locally and opens them as linked 2D slice views with a 3D
-              volume overview.
-            </p>
+            <div className="flex items-stretch justify-between gap-6">
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                  CBCT scan viewer
+                </p>
+                <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">
+                  Voxel Viewer
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-slate-400">
+                  Inspect CBCT (Cone Beam Computed Tomography) scans directly in
+                  the browser from local study folders. The viewer parses
+                  supported exports locally and opens them as linked 2D slice
+                  views with a 3D volume overview.
+                </p>
+              </div>
+              <div className="hidden w-28 shrink-0 self-stretch p-4 md:flex md:w-36 lg:w-40">
+                <img
+                  src="/voxel-viewer-logo.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain object-right opacity-95"
+                />
+              </div>
+            </div>
           </section>
 
           <FolderPicker
