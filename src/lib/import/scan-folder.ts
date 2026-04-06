@@ -68,7 +68,24 @@ export async function fromDirectoryHandle(
   };
 }
 
+export function isDirectoryFileList(files: FileList): boolean {
+  return Array.from(files).some((file) =>
+    (
+      (file as File & { webkitRelativePath?: string }).webkitRelativePath || ''
+    ).includes('/'),
+  );
+}
+
 export function fromFileList(files: FileList): ScanFolderSource {
+  if (!isDirectoryFileList(files)) {
+    const error = new Error(
+      'This browser returned files instead of a folder. On iPhone Safari, directory upload requires working `webkitdirectory` support; otherwise use Chromium desktop.',
+    ) as Error & { code: string };
+    error.name = 'E_DIRECTORY_UPLOAD';
+    error.code = 'E_DIRECTORY_UPLOAD';
+    throw error;
+  }
+
   const entries = Array.from(files, (file) => ({
     name: file.name,
     relativePath:
