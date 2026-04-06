@@ -141,10 +141,11 @@ export function VolumeViewport3D({
         className="absolute inset-0 h-full min-h-0 overflow-hidden"
       />
       <div className="absolute inset-0 z-20 pointer-events-none">
-        <div className="pointer-events-auto absolute bottom-2 right-2 flex items-center justify-end gap-1">
+        <div className="pointer-events-auto absolute inset-x-2 bottom-2 flex flex-wrap items-center justify-center gap-1 sm:inset-x-auto sm:right-2 sm:justify-end">
           <Button
             variant="overlay"
             size="sm"
+            className="min-w-0 flex-1 sm:flex-none"
             onClick={() => onAxisViewsVisibleChange?.(!axisViewsVisible)}
           >
             {axisViewsVisible ? (
@@ -152,11 +153,17 @@ export function VolumeViewport3D({
             ) : (
               <PanelBottomOpen className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
+            <span className="sm:hidden">
+              {axisViewsVisible ? 'Hide axes' : 'Show axis'}
+            </span>
+            <span className="hidden sm:inline">
+              {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
+            </span>
           </Button>
           <Button
             variant="overlay"
             size="sm"
+            className="min-w-0 flex-1 sm:flex-none"
             onClick={() => onSidebarVisibleChange?.(!sidebarVisible)}
           >
             {sidebarVisible ? (
@@ -164,15 +171,26 @@ export function VolumeViewport3D({
             ) : (
               <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+            <span className="sm:hidden">
+              {sidebarVisible ? 'Hide panel' : 'Show panel'}
+            </span>
+            <span className="hidden sm:inline">
+              {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+            </span>
           </Button>
           <Button
             variant="overlay"
             size="sm"
+            className="min-w-0 flex-1 sm:flex-none"
             onClick={() => setPlanesVisible((current) => !current)}
           >
             <Ratio className="h-3.5 w-3.5" aria-hidden="true" />
-            {planesVisible ? 'Hide planes' : 'Show planes'}
+            <span className="sm:hidden">
+              {planesVisible ? 'Planes off' : 'Planes on'}
+            </span>
+            <span className="hidden sm:inline">
+              {planesVisible ? 'Hide planes' : 'Show planes'}
+            </span>
           </Button>
         </div>
       </div>
