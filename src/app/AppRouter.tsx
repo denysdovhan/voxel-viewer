@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { APP_ROUTES } from '../constants';
 import { useViewerApp } from './useViewerApp';
 
@@ -18,17 +18,12 @@ function RouteFallback() {
 
 export function AppRouter() {
   const location = useLocation();
-  const navigate = useNavigate();
   const app = useViewerApp();
   const targetPath = app.volume ? APP_ROUTES.viewer : APP_ROUTES.import;
 
-  useEffect(() => {
-    if (location.pathname === targetPath) {
-      return;
-    }
-
-    navigate(targetPath, { replace: true });
-  }, [location.pathname, navigate, targetPath]);
+  if (location.pathname !== targetPath) {
+    return <Navigate to={targetPath} replace />;
+  }
 
   const ActivePage = app.volume ? ViewerPage : ImportPage;
 
