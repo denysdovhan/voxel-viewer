@@ -2,7 +2,13 @@ import { fromFileList } from '../scan-folder';
 import type { ScanFolderPicker } from './types';
 
 type DirectoryUploadInput = HTMLInputElement & {
+  showPicker?: () => void;
   webkitdirectory?: boolean;
+};
+
+const MIN_IOS_DIRECTORY_UPLOAD_VERSION = {
+  major: 18,
+  minor: 4,
 };
 
 function createDirectoryUploadInput(document: Document): DirectoryUploadInput {
@@ -11,16 +17,57 @@ function createDirectoryUploadInput(document: Document): DirectoryUploadInput {
   input.multiple = true;
   input.setAttribute('webkitdirectory', '');
   input.setAttribute('aria-hidden', 'true');
-  input.className = 'hidden';
+  input.tabIndex = -1;
+  input.style.position = 'fixed';
+  input.style.top = '0';
+  input.style.left = '0';
+  input.style.width = '1px';
+  input.style.height = '1px';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
   return input;
 }
 
-function supportsDirectoryUpload(document: Document) {
-  return 'webkitdirectory' in createDirectoryUploadInput(document);
+function resolveIOSVersion(navigator: Navigator): {
+  major: number;
+  minor: number;
+} | null {
+  const isiOSDevice =
+    /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (!isiOSDevice) return null;
+
+  const match = navigator.userAgent.match(/OS (\d+)(?:[._](\d+))?/i);
+  if (!match) return null;
+
+  return {
+    major: Number.parseInt(match[1] ?? '0', 10),
+    minor: Number.parseInt(match[2] ?? '0', 10),
+  };
+}
+
+function isAtLeastVersion(
+  current: { major: number; minor: number },
+  minimum: { major: number; minor: number },
+) {
+  return (
+    current.major > minimum.major ||
+    (current.major === minimum.major && current.minor >= minimum.minor)
+  );
+}
+
+function supportsDirectoryUpload(document: Document, navigator: Navigator) {
+  if (!('webkitdirectory' in createDirectoryUploadInput(document))) {
+    return false;
+  }
+
+  const iosVersion = resolveIOSVersion(navigator);
+  if (!iosVersion) return true;
+
+  return isAtLeastVersion(iosVersion, MIN_IOS_DIRECTORY_UPLOAD_VERSION);
 }
 
 function pickDirectoryFiles(
-  targetWindow: Window,
   targetDocument: Document,
 ): Promise<FileList | null> {
   return new Promise((resolve) => {
@@ -28,7 +75,6 @@ function pickDirectoryFiles(
     let settled = false;
 
     const cleanup = () => {
-      targetWindow.removeEventListener('focus', handleWindowFocus);
       input.remove();
     };
 
@@ -39,12 +85,6 @@ function pickDirectoryFiles(
       resolve(files);
     };
 
-    const handleWindowFocus = () => {
-      targetWindow.setTimeout(() => {
-        finish(input.files && input.files.length > 0 ? input.files : null);
-      }, 0);
-    };
-
     input.addEventListener(
       'change',
       () => {
@@ -52,25 +92,35 @@ function pickDirectoryFiles(
       },
       { once: true },
     );
+    input.addEventListener(
+      'cancel',
+      () => {
+        finish(null);
+      },
+      { once: true },
+    );
 
     targetDocument.body.append(input);
-    targetWindow.addEventListener('focus', handleWindowFocus, { once: true });
+    if (typeof input.showPicker === 'function') {
+      input.showPicker();
+      return;
+    }
     input.click();
   });
 }
 
 export function createDirectoryUploadPicker(
-  targetWindow: Window,
+  targetNavigator: Navigator,
   targetDocument: Document,
 ): ScanFolderPicker {
-  const supported = supportsDirectoryUpload(targetDocument);
+  const supported = supportsDirectoryUpload(targetDocument, targetNavigator);
 
   return {
     supported,
     async pickSource() {
       if (!supported) return null;
 
-      const files = await pickDirectoryFiles(targetWindow, targetDocument);
+      const files = await pickDirectoryFiles(targetDocument);
       return files ? fromFileList(files) : null;
     },
   };

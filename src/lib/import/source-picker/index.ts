@@ -20,8 +20,8 @@ export function createDefaultScanFolderPicker(): ScanFolderPicker {
     if (handlePicker.supported) return handlePicker;
   }
 
-  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    const uploadPicker = createDirectoryUploadPicker(window, document);
+  if (typeof navigator !== 'undefined' && typeof document !== 'undefined') {
+    const uploadPicker = createDirectoryUploadPicker(navigator, document);
     if (uploadPicker.supported) return uploadPicker;
   }
 
