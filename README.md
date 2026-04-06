@@ -10,7 +10,7 @@
 [![Twitter][twitter-image]][twitter-url]
 
 > [!NOTE]
-> A local-first web viewer for CBCT study folders and voxel volumes.
+> Web-based viewer for CBCT (Cone Beam Computed Tomography) volumes and scan folders (supports Sirona GALILEOS, DICOM, OneVolume)
 
 ## Problem
 
@@ -28,6 +28,13 @@ rendering linked MPR slices alongside a 3D preview.
 [denysdovhan.com/voxel-viewer](https://denysdovhan.com/voxel-viewer/)
 
 Repository: [github.com/denysdovhan/voxel-viewer](https://github.com/denysdovhan/voxel-viewer)
+
+## Install & Offline
+
+- Installable as a browser-native PWA in Chromium-based browsers.
+- After the first online load, the app shell stays available offline.
+- Scan data is not persisted for offline reuse; reopen the local study folder
+  when you launch the app again.
 
 ## Supported Inputs
 

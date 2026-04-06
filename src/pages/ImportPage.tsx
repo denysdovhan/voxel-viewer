@@ -133,12 +133,6 @@ export default function ImportPage({ app }: ImportPageProps) {
               is reference material only and is not imported.
             </div>
           </section>
-
-          <ImportStatus
-            progress={app.progress}
-            issue={app.issue}
-            stage={ImportStatusStage.Import}
-          />
         </div>
       </div>
     </main>
