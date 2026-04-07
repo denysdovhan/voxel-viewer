@@ -47,7 +47,7 @@ I built this project over a weekend to view my dental scans. So far it supports 
 ## Usage
 
 | App                                 | Repository                           |
-| ----------------------------------- | ------------------------------------ |
+|:-----------------------------------:|:------------------------------------:|
 | [📱 denysdovhan.com/voxel-viewer][app] | [👨‍💻 denysdovhan/voxel-viewer][app-repo] |
 | [![QR code for app][app-qr-image]][app] | [![QR code for repository][app-repo-qr-image]][app-repo] |
 
