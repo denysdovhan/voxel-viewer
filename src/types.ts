@@ -75,7 +75,8 @@ export interface ImportIssue {
 
 export interface ImportProgress {
   stage: ImportStage;
-  detail: string;
+  detailKey: string;
+  detailValues?: Record<string, string | number>;
   completed: number;
   total: number;
 }

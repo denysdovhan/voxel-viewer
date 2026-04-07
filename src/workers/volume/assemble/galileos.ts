@@ -20,7 +20,7 @@ export async function assembleGalileosVolume({
 
   post({
     stage: ImportStage.Assembling,
-    detail: 'Preparing GALILEOS volume buffer',
+    detailKey: 'importStatus.progress.preparingGalileosVolumeBuffer',
     completed: 0,
     total: slices.length,
   });
@@ -47,7 +47,11 @@ export async function assembleGalileosVolume({
 
     post({
       stage: ImportStage.InflatingSlices,
-      detail: `Inflated GALILEOS slice ${i + 1}/${slices.length}`,
+      detailKey: 'importStatus.progress.inflatedGalileosSlice',
+      detailValues: {
+        current: i + 1,
+        total: slices.length,
+      },
       completed: i + 1,
       total: slices.length,
     });

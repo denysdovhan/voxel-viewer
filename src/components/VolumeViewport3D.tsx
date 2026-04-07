@@ -6,6 +6,7 @@ import {
   Ratio,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from '../i18n';
 import {
   createThreePreview,
   type ThreePreviewInstance,
@@ -32,10 +33,11 @@ export function VolumeViewport3D({
   onSidebarVisibleChange,
   onDownsampledChange,
 }: VolumeViewport3DProps) {
+  const { t } = useTranslation();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<ThreePreviewInstance | null>(null);
   const cursorRef = useRef<VolumeCursor | null>(cursor);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const [planesVisible, setPlanesVisible] = useState(true);
   const planesVisibleRef = useRef(planesVisible);
 
@@ -56,7 +58,7 @@ export function VolumeViewport3D({
   useEffect(() => {
     const host = hostRef.current;
     if (!host || !volume) {
-      setError(null);
+      setError(false);
       return undefined;
     }
 
@@ -67,7 +69,7 @@ export function VolumeViewport3D({
     let retryTimer = 0;
     let retryCount = 0;
     let resizeObserver: ResizeObserver | null = null;
-    setError(null);
+    setError(false);
 
     const scheduleRetry = () => {
       if (cancelled || mounted || retryCount >= 4) return;
@@ -98,18 +100,14 @@ export function VolumeViewport3D({
           instance.setPlanesVisible(planesVisibleRef.current);
           cleanup = instance.dispose;
         })
-        .catch((renderError: unknown) => {
+        .catch((_renderError: unknown) => {
           if (cancelled) return;
           mounted = false;
           if (retryCount < 4) {
             scheduleRetry();
             return;
           }
-          setError(
-            renderError instanceof Error
-              ? renderError.message
-              : '3D preview failed',
-          );
+          setError(true);
         });
     };
 
@@ -154,10 +152,14 @@ export function VolumeViewport3D({
               <PanelBottomOpen className="h-3.5 w-3.5" aria-hidden="true" />
             )}
             <span className="sm:hidden">
-              {axisViewsVisible ? 'Hide axes' : 'Show axis'}
+              {axisViewsVisible
+                ? t('volumeViewport3d.hideAxisViewsShort')
+                : t('volumeViewport3d.showAxisViewsShort')}
             </span>
             <span className="hidden sm:inline">
-              {axisViewsVisible ? 'Hide axis views' : 'Show axis views'}
+              {axisViewsVisible
+                ? t('volumeViewport3d.hideAxisViewsLong')
+                : t('volumeViewport3d.showAxisViewsLong')}
             </span>
           </Button>
           <Button
@@ -172,10 +174,14 @@ export function VolumeViewport3D({
               <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />
             )}
             <span className="sm:hidden">
-              {sidebarVisible ? 'Hide panel' : 'Show panel'}
+              {sidebarVisible
+                ? t('volumeViewport3d.hideSidebarShort')
+                : t('volumeViewport3d.showSidebarShort')}
             </span>
             <span className="hidden sm:inline">
-              {sidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+              {sidebarVisible
+                ? t('volumeViewport3d.hideSidebarLong')
+                : t('volumeViewport3d.showSidebarLong')}
             </span>
           </Button>
           <Button
@@ -186,17 +192,21 @@ export function VolumeViewport3D({
           >
             <Ratio className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="sm:hidden">
-              {planesVisible ? 'Planes off' : 'Planes on'}
+              {planesVisible
+                ? t('volumeViewport3d.hidePlanesShort')
+                : t('volumeViewport3d.showPlanesShort')}
             </span>
             <span className="hidden sm:inline">
-              {planesVisible ? 'Hide planes' : 'Show planes'}
+              {planesVisible
+                ? t('volumeViewport3d.hidePlanesLong')
+                : t('volumeViewport3d.showPlanesLong')}
             </span>
           </Button>
         </div>
       </div>
       {error ? (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/85 px-4 text-center text-xs text-slate-400">
-          {error}
+          {t('volumeViewport3d.previewError')}
         </div>
       ) : null}
     </div>

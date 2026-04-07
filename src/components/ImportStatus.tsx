@@ -1,3 +1,4 @@
+import { useTranslation } from '../i18n';
 import { type ImportIssue, type ImportProgress, ImportStage } from '../types';
 import { cn } from '../utils/cn';
 
@@ -42,7 +43,20 @@ export function ImportStatus({
   issue,
   stage = ImportStatusStage.Import,
 }: ImportStatusProps) {
+  const { t } = useTranslation();
   const pct = Math.round(resolveProgressPercent(progress));
+  const detail = t(progress.detailKey, progress.detailValues);
+  const issueText = issue?.message;
+  const stageLabelKey: Record<ImportStage, string> = {
+    [ImportStage.Idle]: 'importStatus.stages.idle',
+    [ImportStage.Scanning]: 'importStatus.stages.scanning',
+    [ImportStage.ParsingMeta]: 'importStatus.stages.parsingMeta',
+    [ImportStage.InflatingSlices]: 'importStatus.stages.inflatingSlices',
+    [ImportStage.Assembling]: 'importStatus.stages.assembling',
+    [ImportStage.Preparing3D]: 'importStatus.stages.preparing3D',
+    [ImportStage.Ready]: 'importStatus.stages.ready',
+    [ImportStage.Error]: 'importStatus.stages.error',
+  };
 
   return (
     <div
@@ -53,10 +67,10 @@ export function ImportStatus({
     >
       <div className="flex items-center justify-between gap-3">
         <strong className="truncate text-sm font-medium text-slate-100">
-          {progress.detail}
+          {detail}
         </strong>
         <span className="shrink-0 text-[11px] uppercase tracking-wide text-slate-500">
-          {progress.stage}
+          {t(stageLabelKey[progress.stage])}
         </span>
       </div>
       <div
@@ -72,10 +86,8 @@ export function ImportStatus({
         <span className="text-xs text-slate-500">
           {progress.completed}/{progress.total || 0}
         </span>
-        {issue ? (
-          <span className="text-right text-xs text-amber-300">
-            {issue.message}
-          </span>
+        {issueText ? (
+          <span className="text-right text-xs text-amber-300">{issueText}</span>
         ) : null}
       </div>
     </div>

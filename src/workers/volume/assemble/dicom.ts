@@ -20,7 +20,7 @@ export async function assembleDicomVolume({
 
   post({
     stage: ImportStage.Assembling,
-    detail: 'Reading DICOM slice stack',
+    detailKey: 'importStatus.progress.readingDicomSliceStack',
     completed: 0,
     total: slices.length,
   });
@@ -58,7 +58,11 @@ export async function assembleDicomVolume({
 
     post({
       stage: ImportStage.Assembling,
-      detail: `Decoded DICOM slice ${index + 1}/${slices.length}`,
+      detailKey: 'importStatus.progress.decodedDicomSlice',
+      detailValues: {
+        current: index + 1,
+        total: slices.length,
+      },
       completed: index + 1,
       total: slices.length,
     });

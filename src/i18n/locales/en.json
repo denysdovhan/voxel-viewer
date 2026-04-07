@@ -1,0 +1,154 @@
+{
+  "common": {
+    "language": "Language",
+    "languages": {
+      "en": "English",
+      "uk": "Українська"
+    },
+    "referenceOnly": "Reference only. Not for diagnosis, treatment planning, measurements, or implant workflows.",
+    "loadingViewerShell": "Loading viewer shell...",
+    "preparingViewer": "Preparing viewer...",
+    "openFolder": "Open folder",
+    "backToImport": "Back to import",
+    "hide": "Hide",
+    "show": "Show"
+  },
+  "importPage": {
+    "eyebrow": "CBCT scan viewer",
+    "title": "Voxel Viewer",
+    "description": "Inspect CBCT (Cone Beam Computed Tomography) scans directly in the browser from local study folders. The viewer parses supported exports locally and opens them as linked 2D slice views with a 3D volume overview.",
+    "github": "Star on GitHub",
+    "logoAlt": "Voxel Viewer cube logo",
+    "busyTitle": "Building viewer",
+    "busySubtitle": "Source: {{sourceLabel}}",
+    "selectedScanFolder": "Selected scan folder",
+    "supportedFoldersTitle": "Supported folders",
+    "supportedFolders": {
+      "galileos": {
+        "title": "GALILEOS",
+        "description": "Legacy GALILEOS study volumes stored as compressed slice files.",
+        "instruction": "Select the study folder that contains <0>*_vol_0</0> and <1>*_vol_0_###</1>."
+      },
+      "oneVolume": {
+        "title": "OneVolume CT",
+        "description": "Native OneVolume volume stored in CT_0.vol.",
+        "instruction": "Select the <0>CT_*</0> folder, or the export root if you want the app to auto-detect the nested CT study folder."
+      },
+      "dicom": {
+        "title": "DICOM CT",
+        "description": "Standard DICOM slice stacks exported from compatible CT software.",
+        "instruction": "Select the folder that contains the <0>.dcm</0> slices, usually <1>DICOM/</1>."
+      }
+    },
+    "referenceNote": "<0>Series_01/</0> is reference material only and is not imported."
+  },
+  "folderPicker": {
+    "title": "Open a scan folder",
+    "description": "Choose a local export folder to load the scan into the viewer.",
+    "detail": "The app builds the volume in-browser and opens linked axial, sagittal, coronal, and 3D views.",
+    "source": "Source: {{label}}",
+    "unsupportedHint": "Folder selection needs a browser with directory upload support. Safari on iPhone requires iOS 18.4+.",
+    "openSupported": "Open folder",
+    "openUnsupported": "Directory API unavailable"
+  },
+  "importStatus": {
+    "stages": {
+      "idle": "Idle",
+      "scanning": "Scanning",
+      "parsingMeta": "Parsing metadata",
+      "inflatingSlices": "Inflating slices",
+      "assembling": "Assembling volume",
+      "preparing3D": "Preparing 3D",
+      "ready": "Ready",
+      "error": "Error"
+    },
+    "progress": {
+      "selectFolder": "Select a supported CT folder to begin",
+      "scanningSelectedFolder": "Scanning selected folder",
+      "parsedMetadata": "Parsed {{formatLabel}} metadata",
+      "loadedScan": "Loaded {{scanId}}",
+      "importFailed": "Import failed",
+      "preparing3DRendering": "Preparing {{formatLabel}} 3D rendering",
+      "preparingGalileosVolumeBuffer": "Preparing GALILEOS volume buffer",
+      "inflatedGalileosSlice": "Inflated GALILEOS slice {{current}}/{{total}}",
+      "readingOneVolumeVoxelPayload": "Reading OneVolume voxel payload",
+      "decodedOneVolumeVoxelPayload": "Decoded OneVolume voxel payload",
+      "readingDicomSliceStack": "Reading DICOM slice stack",
+      "decodedDicomSlice": "Decoded DICOM slice {{current}}/{{total}}"
+    }
+  },
+  "viewerPage": {
+    "loading": "Preparing viewer...",
+    "mainNavigationVolume": "Main navigation volume",
+    "nativeStatus": "Native",
+    "downsampledStatus": "Downsampled",
+    "preparingStatus": "Preparing",
+    "studyPanel": "Study panel",
+    "closeStudyPanel": "Close study panel"
+  },
+  "viewerSidebar": {
+    "study": "Study",
+    "display": "Display",
+    "navigation": "Navigation",
+    "window": "Window",
+    "windowHint": "Contrast span. Smaller window = more contrast.",
+    "level": "Level",
+    "levelHint": "Brightness bias. Higher level favors denser tissue.",
+    "cursor": "Cursor",
+    "cursorUnavailable": "n/a",
+    "dragHint": "Drag inside any 2D pane to scrub linked slices.",
+    "zoomHint": "Wheel or pinch to zoom; when zoomed, scrubbing keeps the crosshair centered when possible.",
+    "orientationHint": "Coronal and sagittal views are flipped so superior anatomy stays at the top.",
+    "volumeSection": "3D using full volume.",
+    "volumeNative": "Native full-volume resolution.",
+    "volumeDownsampled": "Downsampled from full volume to fit GPU texture limits.",
+    "planeHint": "Colored planes in 3D match the current coronal, sagittal, and axial slices.",
+    "openFolder": "Open folder",
+    "backToImport": "Back to import",
+    "voxelsLabel": "{{dimensions}} voxels",
+    "spacingLabel": "{{spacing}} mm"
+  },
+  "axisViewport": {
+    "selectAxisView": "Select axis view",
+    "options": {
+      "coronal": "Coronal",
+      "sagittal": "Sagittal",
+      "axial": "Axial"
+    },
+    "coronal": {
+      "label": "Coronal",
+      "orientation": "Frontal · superior at top",
+      "status": "Y {{current}}/{{total}}"
+    },
+    "sagittal": {
+      "label": "Sagittal",
+      "orientation": "Lateral · superior at top",
+      "status": "X {{current}}/{{total}}"
+    },
+    "axial": {
+      "label": "Axial",
+      "orientation": "Occlusal",
+      "status": "Z {{current}}/{{total}}"
+    },
+    "noVolume": "No volume"
+  },
+  "volumeViewport3d": {
+    "hideAxisViewsShort": "Hide axes",
+    "showAxisViewsShort": "Show axis",
+    "hideAxisViewsLong": "Hide axis views",
+    "showAxisViewsLong": "Show axis views",
+    "hideSidebarShort": "Hide panel",
+    "showSidebarShort": "Show panel",
+    "hideSidebarLong": "Hide sidebar",
+    "showSidebarLong": "Show sidebar",
+    "hidePlanesShort": "Planes off",
+    "showPlanesShort": "Planes on",
+    "hidePlanesLong": "Hide planes",
+    "showPlanesLong": "Show planes",
+    "previewError": "3D preview failed"
+  },
+  "errors": {
+    "failedToLoadSelectedScanFolder": "Failed to load the selected scan folder.",
+    "unsupportedFolderLayout": "Unsupported folder layout. Select a GALILEOS study, a OneVolume export root, or a DICOM slice folder."
+  }
+}

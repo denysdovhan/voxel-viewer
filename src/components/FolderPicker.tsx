@@ -1,4 +1,5 @@
 import { FolderInput } from 'lucide-react';
+import { useTranslation } from '../i18n';
 import { Button } from './Button';
 
 interface FolderPickerProps {
@@ -6,7 +7,6 @@ interface FolderPickerProps {
   onPickDirectory: () => void;
   busy?: boolean;
   detail?: string;
-  unsupportedHint?: string;
 }
 
 export function FolderPicker({
@@ -14,24 +14,24 @@ export function FolderPicker({
   onPickDirectory,
   busy,
   detail,
-  unsupportedHint,
 }: FolderPickerProps) {
+  const { t } = useTranslation();
+
   return (
     <section className="rounded border border-slate-800 bg-slate-950/70 p-4">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-slate-100">
-          Open a scan folder
+          {t('folderPicker.title')}
         </h2>
         <p className="text-sm text-slate-400">
-          Choose a local export folder to load the scan into the viewer.
+          {t('folderPicker.description')}
         </p>
-        <p className="text-sm text-slate-500">
-          The app builds the volume in-browser and opens linked axial, sagittal,
-          coronal, and 3D views.
-        </p>
+        <p className="text-sm text-slate-500">{t('folderPicker.detail')}</p>
         {detail ? <p className="text-xs text-slate-500">{detail}</p> : null}
-        {!directorySupported && unsupportedHint ? (
-          <p className="text-xs text-amber-300">{unsupportedHint}</p>
+        {!directorySupported ? (
+          <p className="text-xs text-amber-300">
+            {t('folderPicker.unsupportedHint')}
+          </p>
         ) : null}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -41,7 +41,9 @@ export function FolderPicker({
           disabled={busy || !directorySupported}
         >
           <FolderInput className="h-4 w-4" aria-hidden="true" />
-          {directorySupported ? 'Open folder' : 'Directory API unavailable'}
+          {directorySupported
+            ? t('folderPicker.openSupported')
+            : t('folderPicker.openUnsupported')}
         </Button>
       </div>
     </section>

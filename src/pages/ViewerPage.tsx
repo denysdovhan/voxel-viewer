@@ -6,6 +6,7 @@ import { Button } from '../components/Button';
 import { ViewerSidebar } from '../components/ViewerSidebar';
 import { ViewportFrame } from '../components/ViewportFrame';
 import { VolumeViewport3D } from '../components/VolumeViewport3D';
+import { useTranslation } from '../i18n';
 import { cn } from '../utils/cn';
 
 interface ViewerPageProps {
@@ -14,12 +15,13 @@ interface ViewerPageProps {
 
 export default function ViewerPage({ app }: ViewerPageProps) {
   const compactLayout = useCompactViewerLayout();
+  const { t } = useTranslation();
 
   if (!app.volume) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
         <div className="rounded border border-slate-800 bg-slate-950/90 px-4 py-3 text-sm text-slate-400">
-          Preparing viewer...
+          {t('viewerPage.loading')}
         </div>
       </main>
     );
@@ -60,13 +62,13 @@ export default function ViewerPage({ app }: ViewerPageProps) {
                       3D
                     </span>
                   }
-                  subtitle="Main navigation volume"
+                  subtitle={t('viewerPage.mainNavigationVolume')}
                   status={
                     app.prepared3D
                       ? app.prepared3D.downsampled
-                        ? 'Downsampled'
-                        : 'Native'
-                      : 'Preparing'
+                        ? t('viewerPage.downsampledStatus')
+                        : t('viewerPage.nativeStatus')
+                      : t('viewerPage.preparingStatus')
                   }
                 >
                   <VolumeViewport3D
@@ -125,14 +127,14 @@ export default function ViewerPage({ app }: ViewerPageProps) {
           <div className="absolute inset-0 z-40 flex justify-end">
             <button
               type="button"
-              aria-label="Close study panel"
+              aria-label={t('viewerPage.closeStudyPanel')}
               className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px]"
               onClick={() => app.setSidebarVisible(false)}
             />
             <div className="relative flex h-full w-[min(24rem,92vw)] flex-col border-l border-slate-800 bg-slate-900">
               <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-3 py-2">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  Study panel
+                  {t('viewerPage.studyPanel')}
                 </div>
                 <Button
                   variant="overlay"
@@ -140,7 +142,7 @@ export default function ViewerPage({ app }: ViewerPageProps) {
                   onClick={() => app.setSidebarVisible(false)}
                 >
                   <PanelRightClose className="h-3.5 w-3.5" aria-hidden="true" />
-                  Hide
+                  {t('common.hide')}
                 </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto bg-slate-800 p-px">

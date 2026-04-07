@@ -13,7 +13,7 @@
 [![Twitter][twitter-image]][twitter-url]
 
 > [!NOTE]
-> Web-based viewer for CBCT (Cone Beam Computed Tomography) volumes and scan folders (supports Sirona GALILEOS, DICOM, OneVolume)
+> Web-based viewer for [CBCT (Cone Beam Computed Tomography)][cbct-wiki] volumes and scan folders (supports Sirona GALILEOS, DICOM, OneVolume)
 
 ## Problem
 
@@ -88,6 +88,7 @@ npm run dev
 [app]: https://denysdovhan.com/voxel-viewer
 [app-repo]: https://github.com/denysdovhan/voxel-viewer
 [denysdovhan]: https://denysdovhan.com
+[cbct-wiki]: https://en.wikipedia.org/wiki/Cone_beam_computed_tomography
 
 <!-- Badges -->
 

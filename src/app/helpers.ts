@@ -1,4 +1,5 @@
 import { LEVEL_MAX, LEVEL_MIN, WINDOW_MAX, WINDOW_MIN } from '../constants';
+import { i18n } from '../i18n';
 import type {
   ImportIssue,
   ImportProgress,
@@ -28,13 +29,22 @@ export function makeImportIssue(error: unknown): ImportIssue {
     };
 
     if (typeof value.message === 'string') {
+      const code =
+        typeof value.code === 'string'
+          ? value.code
+          : typeof value.name === 'string'
+            ? value.name
+            : 'E_IMPORT';
+
+      if (code === 'E_FORMAT') {
+        return {
+          code,
+          message: i18n.t('errors.unsupportedFolderLayout'),
+        };
+      }
+
       return {
-        code:
-          typeof value.code === 'string'
-            ? value.code
-            : typeof value.name === 'string'
-              ? value.name
-              : 'E_IMPORT',
+        code,
         message: value.message,
       };
     }
@@ -42,7 +52,7 @@ export function makeImportIssue(error: unknown): ImportIssue {
 
   return {
     code: 'E_IMPORT',
-    message: 'Failed to load the selected scan folder.',
+    message: i18n.t('errors.failedToLoadSelectedScanFolder'),
   };
 }
 

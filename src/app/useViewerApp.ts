@@ -134,12 +134,6 @@ export function useViewerApp({
   const loadSource = useEffectEvent(async (source: ScanFolderSource) => {
     resetViewer();
     setSourceLabel(source.label);
-    setProgress({
-      stage: ImportStage.Scanning,
-      detail: `Scanning ${source.label}`,
-      completed: 0,
-      total: 1,
-    });
 
     try {
       const loaded = await loadVolumeFromFolder(source, setProgress);
@@ -153,7 +147,10 @@ export function useViewerApp({
       setMprZoom(DEFAULT_MPR_ZOOM);
       setProgress({
         stage: ImportStage.Ready,
-        detail: `Loaded ${loaded.meta.scanId}`,
+        detailKey: 'importStatus.progress.loadedScan',
+        detailValues: {
+          scanId: loaded.meta.scanId,
+        },
         completed: loaded.meta.sliceCount,
         total: loaded.meta.sliceCount,
       });
@@ -163,7 +160,7 @@ export function useViewerApp({
       setIssue(makeImportIssue(error));
       setProgress({
         stage: ImportStage.Error,
-        detail: 'Import failed',
+        detailKey: 'importStatus.progress.importFailed',
         completed: 0,
         total: 1,
       });

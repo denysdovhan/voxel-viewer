@@ -1,0 +1,154 @@
+{
+  "common": {
+    "language": "Мова",
+    "languages": {
+      "en": "English",
+      "uk": "Українська"
+    },
+    "referenceOnly": "Лише для довідки. Не для діагностики, планування лікування, вимірювань або імплантологічних робочих процесів.",
+    "loadingViewerShell": "Завантаження оболонки переглядача...",
+    "preparingViewer": "Підготовка переглядача...",
+    "openFolder": "Відкрити папку",
+    "backToImport": "Повернутися до імпорту",
+    "hide": "Сховати",
+    "show": "Показати"
+  },
+  "importPage": {
+    "eyebrow": "Переглядач КТ-знімків",
+    "title": "Voxel Viewer",
+    "description": "Переглядайте КТ (Cone Beam Computed Tomography) безпосередньо в браузері з локальних папок досліджень. Переглядач локально розбирає підтримувані експорти та відкриває їх як пов'язані 2D-зрізи з оглядом 3D-об'єму.",
+    "github": "Star on GitHub",
+    "logoAlt": "Логотип-куб Voxel Viewer",
+    "busyTitle": "Будується переглядач",
+    "busySubtitle": "Джерело: {{sourceLabel}}",
+    "selectedScanFolder": "Вибрана папка скану",
+    "supportedFoldersTitle": "Підтримувані папки",
+    "supportedFolders": {
+      "galileos": {
+        "title": "GALILEOS",
+        "description": "Спадкові томи GALILEOS, збережені як стиснені файли зрізів.",
+        "instruction": "Виберіть папку дослідження, що містить <0>*_vol_0</0> і <1>*_vol_0_###</1>."
+      },
+      "oneVolume": {
+        "title": "OneVolume CT",
+        "description": "Нативний том OneVolume, збережений у CT_0.vol.",
+        "instruction": "Виберіть папку <0>CT_*</0> або корінь експорту, якщо хочете, щоб застосунок автоматично знайшов вкладену папку CT-дослідження."
+      },
+      "dicom": {
+        "title": "DICOM CT",
+        "description": "Стандартні стеки DICOM-зрізів, експортовані сумісним CT-ПЗ.",
+        "instruction": "Виберіть папку, що містить зрізи <0>.dcm</0>, зазвичай <1>DICOM/</1>."
+      }
+    },
+    "referenceNote": "<0>Series_01/</0> — лише довідковий матеріал і не імпортується."
+  },
+  "folderPicker": {
+    "title": "Відкрити папку скану",
+    "description": "Виберіть локальну папку експорту, щоб завантажити скан у переглядач.",
+    "detail": "Застосунок будує том у браузері та відкриває зв'язані аксіальні, сагітальні, корональні та 3D-види.",
+    "source": "Джерело: {{label}}",
+    "unsupportedHint": "Для вибору папки потрібен браузер із підтримкою завантаження директорій. Safari на iPhone вимагає iOS 18.4+.",
+    "openSupported": "Відкрити папку",
+    "openUnsupported": "API директорій недоступне"
+  },
+  "importStatus": {
+    "stages": {
+      "idle": "Очікування",
+      "scanning": "Сканування",
+      "parsingMeta": "Розбір метаданих",
+      "inflatingSlices": "Розпакування зрізів",
+      "assembling": "Збір об'єму",
+      "preparing3D": "Підготовка 3D",
+      "ready": "Готово",
+      "error": "Помилка"
+    },
+    "progress": {
+      "selectFolder": "Виберіть підтримувану CT-папку, щоб почати",
+      "scanningSelectedFolder": "Сканування вибраної папки",
+      "parsedMetadata": "Метадані {{formatLabel}} розібрано",
+      "loadedScan": "Завантажено {{scanId}}",
+      "importFailed": "Імпорт не вдалося",
+      "preparing3DRendering": "Підготовка 3D-візуалізації для {{formatLabel}}",
+      "preparingGalileosVolumeBuffer": "Підготовка буфера об'єму GALILEOS",
+      "inflatedGalileosSlice": "Розпаковано зріз GALILEOS {{current}}/{{total}}",
+      "readingOneVolumeVoxelPayload": "Читання воксельного payload OneVolume",
+      "decodedOneVolumeVoxelPayload": "Payload вокселів OneVolume декодовано",
+      "readingDicomSliceStack": "Читання стека DICOM-зрізів",
+      "decodedDicomSlice": "Декодовано DICOM-зріз {{current}}/{{total}}"
+    }
+  },
+  "viewerPage": {
+    "loading": "Підготовка переглядача...",
+    "mainNavigationVolume": "Основний навігаційний об'єм",
+    "nativeStatus": "Нативний",
+    "downsampledStatus": "Зменшений",
+    "preparingStatus": "Підготовка",
+    "studyPanel": "Панель дослідження",
+    "closeStudyPanel": "Закрити панель дослідження"
+  },
+  "viewerSidebar": {
+    "study": "Дослідження",
+    "display": "Відображення",
+    "navigation": "Навігація",
+    "window": "Вікно",
+    "windowHint": "Діапазон контрасту. Менше вікно = більший контраст.",
+    "level": "Рівень",
+    "levelHint": "Зміщення яскравості. Вищий рівень підсилює щільніші тканини.",
+    "cursor": "Курсор",
+    "cursorUnavailable": "н/д",
+    "dragHint": "Перетягуйте всередині будь-якої 2D-панелі, щоб прокручувати пов'язані зрізи.",
+    "zoomHint": "Колесо або пінч для масштабу; після збільшення прокрутка тримає перехрестя по центру, коли це можливо.",
+    "orientationHint": "Корональний і сагітальний вигляди перевернуті, щоб верхня анатомія залишалася вгорі.",
+    "volumeSection": "3D з повним об'ємом.",
+    "volumeNative": "Нативна роздільна здатність повного об'єму.",
+    "volumeDownsampled": "Зменшено з повного об'єму, щоб уміститись у ліміти GPU-текстури.",
+    "planeHint": "Кольорові площини в 3D відповідають поточним корональним, сагітальним і аксіальним зрізам.",
+    "openFolder": "Відкрити папку",
+    "backToImport": "Повернутися до імпорту",
+    "voxelsLabel": "{{dimensions}} вокселів",
+    "spacingLabel": "{{spacing}} мм"
+  },
+  "axisViewport": {
+    "selectAxisView": "Вибрати вісь перегляду",
+    "options": {
+      "coronal": "Корональний",
+      "sagittal": "Сагітальний",
+      "axial": "Аксіальний"
+    },
+    "coronal": {
+      "label": "Корональний",
+      "orientation": "Фронтальний · верх угорі",
+      "status": "Y {{current}}/{{total}}"
+    },
+    "sagittal": {
+      "label": "Сагітальний",
+      "orientation": "Латеральний · верх угорі",
+      "status": "X {{current}}/{{total}}"
+    },
+    "axial": {
+      "label": "Аксіальний",
+      "orientation": "Оклюзійний",
+      "status": "Z {{current}}/{{total}}"
+    },
+    "noVolume": "Немає об'єму"
+  },
+  "volumeViewport3d": {
+    "hideAxisViewsShort": "Сховати осі",
+    "showAxisViewsShort": "Показати вісь",
+    "hideAxisViewsLong": "Сховати види осей",
+    "showAxisViewsLong": "Показати види осей",
+    "hideSidebarShort": "Сховати панель",
+    "showSidebarShort": "Показати панель",
+    "hideSidebarLong": "Сховати бічну панель",
+    "showSidebarLong": "Показати бічну панель",
+    "hidePlanesShort": "Площини вимкн.",
+    "showPlanesShort": "Площини вкл.",
+    "hidePlanesLong": "Сховати площини",
+    "showPlanesLong": "Показати площини",
+    "previewError": "3D-перегляд не вдалося запустити"
+  },
+  "errors": {
+    "failedToLoadSelectedScanFolder": "Не вдалося завантажити вибрану папку скану.",
+    "unsupportedFolderLayout": "Непідтримувана структура папки. Виберіть дослідження GALILEOS, корінь експорту OneVolume або папку DICOM-зрізів."
+  }
+}

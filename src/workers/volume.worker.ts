@@ -52,7 +52,10 @@ async function handle(request: VolumeWorkerRequest): Promise<{
 
   post({
     stage: ImportStage.Preparing3D,
-    detail: `Preparing ${request.meta.formatLabel} 3D rendering`,
+    detailKey: 'importStatus.progress.preparing3DRendering',
+    detailValues: {
+      formatLabel: request.meta.formatLabel,
+    },
     completed: 1,
     total: 2,
   });

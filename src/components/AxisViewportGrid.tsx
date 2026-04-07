@@ -1,4 +1,6 @@
+import type { TFunction } from 'i18next';
 import { PLANE_COLORS } from '../constants';
+import { useTranslation } from '../i18n';
 import type {
   LoadedVolume,
   SliceImage,
@@ -29,8 +31,8 @@ interface AxisViewportDefinition {
   axis: VolumeAxis;
   badge: string;
   color: string;
-  label: string;
-  orientation: string;
+  labelKey: string;
+  orientationKey: string;
   image: SliceImage | null;
   status: string;
   crosshairPoint?: { x: number; y: number };
@@ -55,6 +57,7 @@ function AxisViewportPane({
   onSelect,
   onZoomChange,
 }: AxisViewportPaneProps) {
+  const { t } = useTranslation();
   const subtitleLabelClass =
     'inline-flex items-center gap-1.5 text-[11px] text-slate-400';
   const axisBadgeClass =
@@ -65,7 +68,7 @@ function AxisViewportPane({
     <ViewportFrame
       title={
         <span className={titleClass} style={{ color: definition.color }}>
-          {definition.label}
+          {t(definition.labelKey)}
         </span>
       }
       subtitle={
@@ -80,7 +83,7 @@ function AxisViewportPane({
           >
             {definition.badge}
           </span>
-          {definition.orientation}
+          {t(definition.orientationKey)}
         </span>
       }
       status={definition.status}
@@ -110,18 +113,22 @@ function resolveAxisDefinitions(
   dimensions: Vec3,
   slices: ViewerSlices,
   volume: LoadedVolume | null,
+  t: TFunction<'translation', undefined>,
 ): Record<VolumeAxis, AxisViewportDefinition> {
   return {
     [VolumeAxis.Coronal]: {
       axis: VolumeAxis.Coronal,
       badge: 'XZ',
       color: PLANE_COLORS.coronal,
-      label: 'Coronal',
-      orientation: 'Frontal · superior at top',
+      labelKey: 'axisViewport.coronal.label',
+      orientationKey: 'axisViewport.coronal.orientation',
       image: slices.coronal,
       status: cursor
-        ? `Y ${cursor.y + 1}/${Math.max(1, dimensions[1])}`
-        : 'No volume',
+        ? t('axisViewport.coronal.status', {
+            current: cursor.y + 1,
+            total: Math.max(1, dimensions[1]),
+          })
+        : t('axisViewport.noVolume'),
       crosshairPoint: cursor
         ? { x: cursor.x, y: dimensions[2] - 1 - cursor.z }
         : undefined,
@@ -135,12 +142,15 @@ function resolveAxisDefinitions(
       axis: VolumeAxis.Sagittal,
       badge: 'YZ',
       color: PLANE_COLORS.sagittal,
-      label: 'Sagittal',
-      orientation: 'Lateral · superior at top',
+      labelKey: 'axisViewport.sagittal.label',
+      orientationKey: 'axisViewport.sagittal.orientation',
       image: slices.sagittal,
       status: cursor
-        ? `X ${cursor.x + 1}/${Math.max(1, dimensions[0])}`
-        : 'No volume',
+        ? t('axisViewport.sagittal.status', {
+            current: cursor.x + 1,
+            total: Math.max(1, dimensions[0]),
+          })
+        : t('axisViewport.noVolume'),
       crosshairPoint: cursor
         ? { x: cursor.y, y: dimensions[2] - 1 - cursor.z }
         : undefined,
@@ -154,12 +164,15 @@ function resolveAxisDefinitions(
       axis: VolumeAxis.Axial,
       badge: 'XY',
       color: PLANE_COLORS.axial,
-      label: 'Axial',
-      orientation: 'Occlusal',
+      labelKey: 'axisViewport.axial.label',
+      orientationKey: 'axisViewport.axial.orientation',
       image: slices.axial,
       status: cursor
-        ? `Z ${cursor.z + 1}/${Math.max(1, dimensions[2])}`
-        : 'No volume',
+        ? t('axisViewport.axial.status', {
+            current: cursor.z + 1,
+            total: Math.max(1, dimensions[2]),
+          })
+        : t('axisViewport.noVolume'),
       crosshairPoint: cursor ? { x: cursor.x, y: cursor.y } : undefined,
       crosshairSpace: volume ? [dimensions[0], dimensions[1]] : undefined,
       crosshairColors: {
@@ -182,9 +195,10 @@ export function AxisViewportGrid({
   onSelectedAxisChange,
   onZoomChange,
 }: AxisViewportGridProps) {
+  const { t } = useTranslation();
   const axisSelector = (
     <label className="pointer-events-auto">
-      <span className="sr-only">Select axis view</span>
+      <span className="sr-only">{t('axisViewport.selectAxisView')}</span>
       <select
         className="rounded border border-slate-700/80 bg-slate-950/75 px-2 py-1 text-[11px] font-medium text-slate-200 outline-none transition focus:border-sky-500"
         value={selectedAxis}
@@ -192,9 +206,15 @@ export function AxisViewportGrid({
           onSelectedAxisChange?.(event.target.value as VolumeAxis)
         }
       >
-        <option value={VolumeAxis.Coronal}>Coronal</option>
-        <option value={VolumeAxis.Sagittal}>Sagittal</option>
-        <option value={VolumeAxis.Axial}>Axial</option>
+        <option value={VolumeAxis.Coronal}>
+          {t('axisViewport.options.coronal')}
+        </option>
+        <option value={VolumeAxis.Sagittal}>
+          {t('axisViewport.options.sagittal')}
+        </option>
+        <option value={VolumeAxis.Axial}>
+          {t('axisViewport.options.axial')}
+        </option>
       </select>
     </label>
   );
@@ -203,6 +223,7 @@ export function AxisViewportGrid({
     dimensions,
     slices,
     volume,
+    t,
   );
   const axes = [VolumeAxis.Coronal, VolumeAxis.Sagittal, VolumeAxis.Axial];
 
