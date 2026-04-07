@@ -1,8 +1,11 @@
+<!-- markdownlint-disable first-line-h1 -->
+<!-- markdownlint-disable no-inline-html -->
 <p align="center">
-  <img src="./public/voxel-viewer-logo.svg" alt="Voxel Viewer logo" width="220" />
+  <img src="./logos/voxel-viewer-logo.svg" alt="Voxel Viewer logo" width="220" />
 </p>
 
 <h1 align="center">Voxel Viewer</h1>
+<!-- markdownlint-enable no-inline-html -->
 
 [![GitHub Build][gh-build-image]][gh-build-url]
 [![GitHub Sponsors][gh-sponsors-image]][gh-sponsors-url]
@@ -28,6 +31,15 @@ rendering linked MPR slices alongside a 3D preview.
 [denysdovhan.com/voxel-viewer](https://denysdovhan.com/voxel-viewer/)
 
 Repository: [github.com/denysdovhan/voxel-viewer](https://github.com/denysdovhan/voxel-viewer)
+
+## Sponsorship
+
+Your generosity will help me maintain and develop more projects like this one.
+
+- 💖 [Sponsor on GitHub][gh-sponsors-url]
+- ☕️ [Buy Me A Coffee][buymeacoffee-url]
+- Bitcoin: `bc1q7lfx6de8jrqt8mcds974l6nrsguhd6u30c6sg8`
+- Ethereum: `0x6aF39C917359897ae6969Ad682C14110afe1a0a1`
 
 ## Install & Offline
 
