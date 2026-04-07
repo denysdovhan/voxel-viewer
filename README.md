@@ -44,11 +44,12 @@ I built this project over a weekend to view my dental scans. So far it supports 
 - 🦷 **Renders 3D model** with intersecting plains
 - 📱 **PWA-ready**, so you can install it on your phone or tablet
 
-## Deployed App
+## Usage
 
 | App                                 | Repository                           |
 | ----------------------------------- | ------------------------------------ |
 | [📱 denysdovhan.com/voxel-viewer][app] | [👨‍💻 denysdovhan/voxel-viewer][app-repo] |
+| [![QR code for app][app-qr-image]][app] | [![QR code for repository][app-repo-qr-image]][app-repo] |
 
 ## Sponsorship
 
@@ -87,6 +88,8 @@ npm run dev
 
 [app]: https://denysdovhan.com/voxel-viewer
 [app-repo]: https://github.com/denysdovhan/voxel-viewer
+[app-qr-image]: https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https%3A%2F%2Fdenysdovhan.com%2Fvoxel-viewer
+[app-repo-qr-image]: https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=https%3A%2F%2Fgithub.com%2Fdenysdovhan%2Fvoxel-viewer
 [denysdovhan]: https://denysdovhan.com
 [cbct-wiki]: https://en.wikipedia.org/wiki/Cone_beam_computed_tomography
 
