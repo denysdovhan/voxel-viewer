@@ -1,4 +1,5 @@
 import type { ViewerApp } from '../app/useViewerApp';
+import logoUrl from '../assets/voxel-viewer-logo.svg';
 import { Button } from '../components/Button';
 import { FolderPicker } from '../components/FolderPicker';
 import { ImportStatus, ImportStatusStage } from '../components/ImportStatus';
@@ -79,9 +80,8 @@ export default function ImportPage({ app }: ImportPageProps) {
               </div>
               <div className="hidden w-28 shrink-0 self-stretch p-4 md:flex md:w-36 lg:w-40">
                 <img
-                  src="/voxel-viewer-logo.svg"
-                  alt=""
-                  aria-hidden="true"
+                  src={logoUrl}
+                  alt="Voxel Viewer cube logo"
                   className="h-full w-full select-none object-contain object-right opacity-95"
                 />
               </div>
