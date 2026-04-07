@@ -17,20 +17,38 @@
 
 ## Problem
 
-Dental and maxillofacial CT exports often arrive as vendor-specific folder
-structures that are awkward to inspect outside proprietary desktop software.
-That makes quick review, debugging, and format comparison harder than it
-should be.
+When I visit my dentist, they often send me 3D renderings of my dental scans to my email. The problem is these scans are usually in a format that can only be opened with specific software, usually only for Windows PCs.
 
-Voxel Viewer solves that by opening supported study folders directly in the
+I wanted to be able to view these scans on my Mac, or on my phone/tablet in the browser.
+
+Dental and maxillofacial CT exports often arrive as vendor-specific folder
+structures. I used [Codex](https://github.com/openai/codex) to reverse-engineer these formats and build a simple web-based viewer for them.
+
+**Voxel Viewer** solves that by opening supported study folders directly in the
 browser, parsing them locally, building the volume off the main thread, and
 rendering linked MPR slices alongside a 3D preview.
 
+## Features
+
+> [!WARNING]
+> This app is a side-project build for fun and learning. This is not a medical-grade software, and it should not be used for diagnostic purposes.
+
+I built this project over a weekend to view my dental scans. So far it supports the following features:
+
+- 📁 **Open scan folders** directly in the browser (File System Access API)
+- 🗃️ **Supports popular MRP fomats** (Sirona GALILEOS, OneVolume, DICOM)
+  - `GALILEOS` folders with `*_vol_0` and `*_vol_0_###`
+  - `OneVolume` exports with native `CT_0.vol`
+  - `DICOM` slice folders with `.dcm` files
+- 🧊 **3 axial slices** (axial, sagittal, coronal) with linked crosshairs
+- 🦷 **Renders 3D model** with intersecting plains
+- 📱 **PWA-ready**, so you can install it on your phone or tablet
+
 ## Deployed App
 
-[denysdovhan.com/voxel-viewer](https://denysdovhan.com/voxel-viewer/)
-
-Repository: [github.com/denysdovhan/voxel-viewer](https://github.com/denysdovhan/voxel-viewer)
+| App                                 | Repository                           |
+| ----------------------------------- | ------------------------------------ |
+| [📱 denysdovhan.com/voxel-viewer][app] | [👨‍💻 denysdovhan/voxel-viewer][app-repo] |
 
 ## Sponsorship
 
@@ -41,45 +59,37 @@ Your generosity will help me maintain and develop more projects like this one.
 - Bitcoin: `bc1q7lfx6de8jrqt8mcds974l6nrsguhd6u30c6sg8`
 - Ethereum: `0x6aF39C917359897ae6969Ad682C14110afe1a0a1`
 
-## Install & Offline
-
-- Installable as a browser-native PWA in Chromium-based browsers.
-- After the first online load, the app shell stays available offline.
-- Scan data is not persisted for offline reuse; reopen the local study folder
-  when you launch the app again.
-
-## Supported Inputs
-
-- `GALILEOS` folders with `*_vol_0` and `*_vol_0_###`
-- `OneVolume` exports with native `CT_0.vol`
-- `DICOM` slice folders with `.dcm` files
-
 ## Tech Overview
 
-- React 19
-- TypeScript 5
-- Vite 7
-- Tailwind CSS 4
-- Three.js
-- Web Workers
-- `fflate`
-- `lodash` debounce
+Overall, this is a web-based app built with the following technologies:
 
-## Local Development
+- **React, TypeScript** - main framework and language
+- **Vite** - build tool
+- **Tailwind** - styling
+- **Three.js** - 3D rendering
+- **Web Workers** - background processing
+- **`fflate`** - compression, unzipping
+
+## Contributing
+
+Clone the repository, install dependencies, and start the development server:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Use a Chromium-based desktop browser so the app can open scan folders via the
-File System Access API.
-
 ## License
 
-[MIT](./LICENSE) © [Denys Dovhan](https://denysdovhan.com)
+[MIT](./LICENSE) © [Denys Dovhan][denysdovhan]
 
 <!-- References -->
+
+[app]: https://denysdovhan.com/voxel-viewer
+[app-repo]: https://github.com/denysdovhan/voxel-viewer
+[denysdovhan]: https://denysdovhan.com
+
+<!-- Badges -->
 
 [gh-build-image]: https://img.shields.io/github/actions/workflow/status/denysdovhan/voxel-viewer/validate.yml?branch=main&style=flat-square
 [gh-build-url]: https://github.com/denysdovhan/voxel-viewer/actions/workflows/validate.yml
