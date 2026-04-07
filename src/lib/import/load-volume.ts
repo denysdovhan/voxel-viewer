@@ -1,3 +1,4 @@
+import { i18n } from '../../i18n';
 import type { ImportProgress, ScanFolderSource } from '../../types';
 import { ImportStage } from '../../types';
 import { importFormatAdapters } from './adapters';
@@ -9,7 +10,7 @@ export async function loadVolumeFromFolder(
 ): Promise<LoadedImport> {
   onProgress?.({
     stage: ImportStage.Scanning,
-    detail: 'Scanning selected folder',
+    detailKey: 'importStatus.progress.scanningSelectedFolder',
     completed: 0,
     total: 1,
   });
@@ -17,16 +18,16 @@ export async function loadVolumeFromFolder(
     candidate.matches(source),
   );
   if (!adapter) {
-    throw makeError(
-      'E_FORMAT',
-      'Unsupported folder layout. Select a GALILEOS study, a OneVolume export root, or a DICOM slice folder.',
-    );
+    throw makeError('E_FORMAT', i18n.t('errors.unsupportedFolderLayout'));
   }
 
   const parsed = await adapter.parse(source);
   onProgress?.({
     stage: ImportStage.ParsingMeta,
-    detail: `Parsed ${adapter.label} metadata`,
+    detailKey: 'importStatus.progress.parsedMetadata',
+    detailValues: {
+      formatLabel: adapter.label,
+    },
     completed: 1,
     total: 3,
   });

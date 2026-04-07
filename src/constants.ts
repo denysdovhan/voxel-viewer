@@ -6,9 +6,6 @@ export const APP_ROUTES = {
   viewer: '/viewer',
 } as const;
 
-export const DISCLAIMER_TEXT =
-  'Reference only. Not for diagnosis, treatment planning, measurements, or implant workflows.';
-
 export const PLANE_COLORS = {
   axial: '#38bdf8',
   coronal: '#f59e0b',
@@ -17,7 +14,7 @@ export const PLANE_COLORS = {
 
 export const IDLE_PROGRESS: ImportProgress = {
   stage: ImportStage.Idle,
-  detail: 'Select a supported CT folder to begin',
+  detailKey: 'importStatus.progress.selectFolder',
   completed: 0,
   total: 1,
 };

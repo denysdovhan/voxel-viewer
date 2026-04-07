@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { APP_ROUTES } from '../constants';
+import { useTranslation } from '../i18n';
 import { createDefaultScanFolderPicker } from '../lib/import/source-picker';
 import { useViewerApp } from './useViewerApp';
 
@@ -8,10 +9,12 @@ const ImportPage = lazy(() => import('../pages/ImportPage'));
 const ViewerPage = lazy(() => import('../pages/ViewerPage'));
 
 function RouteFallback() {
+  const { t } = useTranslation();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
       <div className="rounded border border-slate-800 bg-slate-950/90 px-4 py-3 text-sm text-slate-400">
-        Loading viewer shell...
+        {t('common.loadingViewerShell')}
       </div>
     </main>
   );

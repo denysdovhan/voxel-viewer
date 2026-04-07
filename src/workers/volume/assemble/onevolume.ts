@@ -23,7 +23,7 @@ export async function assembleOneVolumeVolume({
 
   post({
     stage: ImportStage.Assembling,
-    detail: 'Reading OneVolume voxel payload',
+    detailKey: 'importStatus.progress.readingOneVolumeVoxelPayload',
     completed: 0,
     total: 2,
   });
@@ -84,7 +84,7 @@ export async function assembleOneVolumeVolume({
 
   post({
     stage: ImportStage.Assembling,
-    detail: 'Decoded OneVolume voxel payload',
+    detailKey: 'importStatus.progress.decodedOneVolumeVoxelPayload',
     completed: 1,
     total: 2,
   });
