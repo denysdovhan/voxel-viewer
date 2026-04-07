@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Voxel Viewer</title>
+    <script>
+      const path = window.location.pathname;
+      const repoBasePath = '/voxel-viewer/';
+      const appRoot = path.startsWith(repoBasePath) ? repoBasePath : '/';
+      window.location.replace(appRoot);
+    </script>
+  </head>
+  <body></body>
+</html>
