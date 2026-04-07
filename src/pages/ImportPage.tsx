@@ -56,7 +56,7 @@ export default function ImportPage({ app }: ImportPageProps) {
       <div className="mx-auto flex min-h-screen max-w-3xl items-start justify-center px-4 py-8">
         <div className="w-full space-y-3">
           <section className="rounded border border-slate-800 bg-slate-950/80 p-5">
-            <div className="flex items-stretch justify-between gap-6">
+            <div className="flex flex-col-reverse gap-4 md:flex-row md:items-stretch md:justify-between md:gap-6">
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
                   {t('importPage.eyebrow')}
@@ -85,11 +85,11 @@ export default function ImportPage({ app }: ImportPageProps) {
                   {t('importPage.github')}
                 </Button>
               </div>
-              <div className="hidden w-28 shrink-0 self-stretch p-4 md:flex md:w-36 lg:w-40">
+              <div className="mx-auto flex w-24 shrink-0 justify-center md:mx-0 md:w-36 md:self-stretch md:p-4 lg:w-40">
                 <img
                   src={logoUrl}
                   alt={t('importPage.logoAlt')}
-                  className="h-full w-full select-none object-contain object-right opacity-95"
+                  className="h-full w-full select-none object-contain opacity-95 md:object-right"
                 />
               </div>
             </div>
