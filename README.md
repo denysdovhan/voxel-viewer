@@ -44,6 +44,12 @@ I built this project over a weekend to view my dental scans. So far it supports 
 - 🦷 **Renders 3D model** with intersecting plains
 - 📱 **PWA-ready**, so you can install it on your phone or tablet
 
+## Demo
+
+Here is a short demo of what this viewer in action:
+
+https://github.com/user-attachments/assets/dec997b3-1226-479f-b6d1-ed4327fa3c3d
+
 ## Usage
 
 | App                                 | Repository                           |
